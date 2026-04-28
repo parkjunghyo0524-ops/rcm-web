@@ -1225,9 +1225,9 @@ export default function RcmPage() {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((row, rowIndex) => (
+            {filtered.map((row: RowData, rowIndex: number) => (
               <tr key={rowIndex} style={{ backgroundColor: row["신설/삭제"] === "삭제" ? "#e5e7eb" : rowIndex % 2 === 0 ? "#ffffff" : "#f8fbff" }}>
-                {columns.map((col, colIndex) => (
+                {columns.map((col: Column, colIndex: number) => (
                   <td key={col.key} style={{ border: activeTab !== "history" && activeTab !== "yearly" && activeCell?.row === rowIndex && activeCell?.col === colIndex ? "2px solid #2563eb" : "1px solid #c2cfdf", padding: "0", verticalAlign: "top", width: col.width, minWidth: col.width, maxWidth: col.width, backgroundColor: activeTab !== "history" && activeTab !== "yearly" && activeCell?.row === rowIndex && activeCell?.col === colIndex ? "#eff6ff" : undefined }}>
                     {renderCellInput(col, row, rowIndex, colIndex)}
                   </td>
