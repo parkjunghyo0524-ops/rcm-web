@@ -284,7 +284,7 @@ export default function RcmPage() {
     const result: Record<string, string[]> = {};
     for (const col of columns) {
       const values = Array.from(
-        new Set(activeRows.map((row) => String(row[col.key] ?? "")).filter(Boolean))
+        new Set(activeRows.map((row: RowData) => String(row[col.key] ?? "")).filter(Boolean))
       );
       result[col.key] = values.sort((a, b) => a.localeCompare(b, "ko"));
     }
