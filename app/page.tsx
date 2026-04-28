@@ -881,8 +881,8 @@ export default function RcmPage() {
     const bodyHtml = downloadRows
       .map((row) => {
         const cells = downloadColumns
-          .map((col) => {
-            const value = String(row[col.key] ?? "")
+  .map((col: Column) => {
+    const value = String((row as RowData)[col.key] ?? "")
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")
