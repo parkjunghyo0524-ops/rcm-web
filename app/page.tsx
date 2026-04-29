@@ -5,7 +5,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 type Column = {
   key: string;
   label: string;
-  group: string;
+  group: string:
   width?: number;
   type?: "text" | "select" | "date" | "checkbox";
   options?: string[];
