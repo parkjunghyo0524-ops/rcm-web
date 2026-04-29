@@ -1198,7 +1198,7 @@ export default function RcmPage() {
                     </button>
 
                     {openFilter === col.key && (
-                      <div style={{ position: "absolute", top: "24px", left: 0,width: "150px", maxHeight: "260px", overflowY: "auto", background: "white", border: "1px solid #94a3b8", boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 10, color: "#111827", borderRadius: "6px", textAlign: "left" }}>
+                      <div style={{ position: "absolute", top: "24px", left: 0,width: "220px",zIndex: 9999, maxHeight: "260px", overflowY: "auto", background: "white", border: "1px solid #94a3b8", boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 10, color: "#111827", borderRadius: "6px", textAlign: "left" }}>
                         <div style={{ padding: "8px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                           <span style={{ fontWeight: "bold", fontSize: "12px" }}>{col.label.split("\n")[0]}</span>
                           <button onClick={() => clearColumnFilter(col.key)} style={{ border: "none", background: "transparent", color: "#2563eb", cursor: "pointer", fontSize: "12px" }}>
