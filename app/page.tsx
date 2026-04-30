@@ -917,13 +917,15 @@ export default function RcmPage() {
           </style>
         </head>
         <body>
-          <table>
-            <thead>
-              <tr>${groupHeaderHtml}</tr>
-              <tr>${columnHeaderHtml}</tr>
-            </thead>
-            <tbody>${bodyHtml}</tbody>
-          </table>
+<div style="padding: 0 30px;">
+  <table>
+    <thead>
+      <tr>${groupHeaderHtml}</tr>
+      <tr>${columnHeaderHtml}</tr>
+    </thead>
+    <tbody>${bodyHtml}</tbody>
+  </table>
+</div>
         </body>
       </html>
     `;
