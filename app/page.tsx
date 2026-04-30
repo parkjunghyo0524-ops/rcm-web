@@ -1178,52 +1178,55 @@ export default function RcmPage() {
         )}
       </div>
 
-      <div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflowX: "auto", overflowY: "auto", maxHeight: "78vh", backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 24px" }}>
-        <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
-          <thead>
-            <tr>
-              {groupHeaders.map((g) => (
-                <th key={g.group} colSpan={g.span} style={{ border: "1px solid #8a98ac", padding: "6px 8px", color: "white", backgroundColor: "#4e5b6b", textAlign: "center", fontWeight: "bold", position: "sticky", top: 0, zIndex: 3, whiteSpace: "nowrap" }}>
-                  {g.group}
-                </th>
-              ))}
-            </tr>
-            <tr>
-              {columns.map((col) => (
-                <th key={col.key} style={{ border: "1px solid #8fa1b7", padding: "0", backgroundColor: hasFilter(col.key) ? "#8ea4c5" : "#a9b7ca", color: "white", position: "sticky", top: 33, zIndex: 2, width: col.width, minWidth: col.width, maxWidth: col.width, verticalAlign: "top" }}>
-                  <div style={{ padding: "8px 8px 4px 8px", whiteSpace: "pre-line", textAlign: "center", minHeight: "54px", fontWeight: "bold", lineHeight: 1.2 }}>
-                    {col.label}
-                  </div>
-                  <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
-                    <button onClick={() => setOpenFilter((prev) => (prev === col.key ? null : col.key))} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
-                      <span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span>
-                    </button>
+<div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflowX: "auto", overflowY: "visible", maxHeight: "78vh", backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 24px" }}>
+  <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
+    <thead>
+      <tr>
+        {groupHeaders.map((g) => (
+          <th key={g.group} colSpan={g.span} style={{ border: "1px solid #8a98ac", padding: "6px 8px", color: "white", backgroundColor: "#4e5b6b", textAlign: "center", fontWeight: "bold", position: "sticky", top: 0, zIndex: 3, whiteSpace: "nowrap" }}>
+            {g.group}
+          </th>
+        ))}
+      </tr>
+      <tr>
+        {columns.map((col) => (
+          <th key={col.key} style={{ border: "1px solid #8fa1b7", padding: "0", backgroundColor: hasFilter(col.key) ? "#8ea4c5" : "#a9b7ca", color: "white", position: "sticky", top: 33, zIndex: 2, width: col.width, minWidth: col.width, maxWidth: col.width, verticalAlign: "top" }}>
+            <div style={{ padding: "8px 8px 4px 8px", whiteSpace: "pre-line", textAlign: "center", minHeight: "54px", fontWeight: "bold", lineHeight: 1.2 }}>
+              {col.label}
+            </div>
 
-                    {openFilter === col.key && (
-                      <div style={{ position: "absolute", top: "24px", left: 0,width: "150px", zIndex: 9999, maxHeight: "260px", overflowY: "auto", background: "white", border: "1px solid #94a3b8", boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 9999, color: "#111827", borderRadius: "6px", textAlign: "left" }}>
-                        <div style={{ padding: "8px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                          <span style={{ fontWeight: "bold", fontSize: "12px" }}>{col.label.split("\n")[0]}</span>
-                          <button onClick={() => clearColumnFilter(col.key)} style={{ border: "none", background: "transparent", color: "#2563eb", cursor: "pointer", fontSize: "12px" }}>
-                            초기화
-                          </button>
-                        </div>
-                        <div style={{ padding: "8px" }}>
-                          {optionsByColumn[col.key].length === 0 ? (
-                            <div style={{ fontSize: "12px", color: "#6b7280" }}>값 없음</div>
-                          ) : (
-                            optionsByColumn[col.key].map((option) => (
-                              <label key={option} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", padding: "4px 0", cursor: "pointer" }}>
-                                <input type="checkbox" checked={(filters[col.key] ?? []).includes(option)} onChange={() => toggleFilterValue(col.key, option)} />
-                                <span style={{ wordBreak: "break-word", lineHeight: 1.3 }}>{option}</span>
-                              </label>
-                            ))
-                          )}
-                        </div>
-                      </div>
+            <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
+              <button onClick={() => setOpenFilter((prev) => (prev === col.key ? null : col.key))} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+                <span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span>
+              </button>
+
+              {openFilter === col.key && (
+                <div style={{ position: "absolute", top: "24px", left: 0, width: "110px", maxHeight: "260px", overflowY: "auto", background: "white", border: "1px solid #94a3b8", boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 9999, color: "#111827", borderRadius: "6px", textAlign: "left" }}>
+                  <div style={{ padding: "8px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                    <span style={{ fontWeight: "bold", fontSize: "12px" }}>{col.label.split("\n")[0]}</span>
+                    <button onClick={() => clearColumnFilter(col.key)} style={{ border: "none", background: "transparent", color: "#2563eb", cursor: "pointer", fontSize: "12px" }}>
+                      초기화
+                    </button>
+                  </div>
+
+                  <div style={{ padding: "8px" }}>
+                    {optionsByColumn[col.key].length === 0 ? (
+                      <div style={{ fontSize: "12px", color: "#6b7280" }}>값 없음</div>
+                    ) : (
+                      optionsByColumn[col.key].map((option) => (
+                        <label key={option} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", padding: "4px 0", cursor: "pointer" }}>
+                          <input type="checkbox" checked={(filters[col.key] ?? []).includes(option)} onChange={() => toggleFilterValue(col.key, option)} />
+                          <span style={{ wordBreak: "break-word", lineHeight: 1.3 }}>{option}</span>
+                        </label>
+                      ))
                     )}
                   </div>
-                </th>
-              ))}
+                </div>
+              )}
+            </div>
+          </th>
+        ))}
+      </tr>
             </tr>
           </thead>
           <tbody>
