@@ -1179,7 +1179,7 @@ export default function RcmPage() {
         )}
       </div>
 
-<div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflowX: "auto", overflowY: "visible", maxHeight: "78vh", backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 4px" }}>
+<div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflowX: "auto", overflowY: "visible", maxHeight: "78vh", backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 2px" }}>
   <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
     <thead>
       <tr>
