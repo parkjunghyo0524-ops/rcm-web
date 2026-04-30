@@ -1197,7 +1197,7 @@ export default function RcmPage() {
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
-              <button onClick={(e) => {const rect = e.currentTarget.getBoundingClientRect();setFilterPos({top: rect.bottom + 4,left: rect.left,});setOpenFilter((prev) => (prev === col.key ? null : col.key));}} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <button onClick={(e) => {const rect = e.currentTarget.getBoundingClientRect();const popupWidth = 110;setFilterPos({top: rect.bottom + 4,left: rect.left + rect.width / 2 - popupWidth / 2});setOpenFilter((prev) => (prev === col.key ? null : col.key));}} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                 <span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span>
               </button>
 
