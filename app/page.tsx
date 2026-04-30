@@ -1226,7 +1226,6 @@ export default function RcmPage() {
             </div>
           </th>
         ))}
-      </tr>
             </tr>
           </thead>
           <tbody>
