@@ -158,6 +158,7 @@ export default function RcmPage() {
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [changeSearch, setChangeSearch] = useState("");
+  const [filterPos, setFilterPos] = useState<{ top: number; left: number } | null>(null);
   const [lockedTabs, setLockedTabs] = useState<{ current: boolean; previous: boolean }>({
     current: false,
     previous: false,
@@ -1196,12 +1197,12 @@ export default function RcmPage() {
             </div>
 
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
-              <button onClick={() => setOpenFilter((prev) => (prev === col.key ? null : col.key))} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
+              <button onClick={(e) => {const rect = e.currentTarget.getBoundingClientRect();setFilterPos({top: rect.bottom + 4,left: rect.left,});setOpenFilter((prev) => (prev === col.key ? null : col.key));}} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}>
                 <span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span>
               </button>
 
               {openFilter === col.key && (
-                <div style={{ position: "absolute", top: "24px", left: 0, width: "110px", maxHeight: "260px", overflowY: "auto", background: "white", border: "1px solid #94a3b8", boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 9999, color: "#111827", borderRadius: "6px", textAlign: "left" }}>
+                <div style={{position: "fixed",top: filterPos?.top ?? 0,left: filterPos?.left ?? 0,width: "110px",maxHeight: "260px",overflowY: "auto",background: "white",border: "1px solid #94a3b8",boxShadow: "0 8px 24px rgba(0,0,0,0.18)",zIndex: 99999,color: "#111827",borderRadius: "6px",textAlign: "left",}}>
                   <div style={{ padding: "8px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                     <span style={{ fontWeight: "bold", fontSize: "12px" }}>{col.label.split("\n")[0]}</span>
                     <button onClick={() => clearColumnFilter(col.key)} style={{ border: "none", background: "transparent", color: "#2563eb", cursor: "pointer", fontSize: "12px" }}>
