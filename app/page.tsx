@@ -116,7 +116,6 @@ export default function RcmPage() {
   ];
 
   const historyColumns: Column[] = [
-    { key: "checked", label: "", group: "변경이력", width: 50, type: "checkbox" },
     { key: "no", label: "No.", group: "변경이력", width: 60 },
     { key: "수정일", label: "수정일", group: "변경이력", width: 120 },
     { key: "Mega Process", label: "Mega Process", group: "변경이력", width: 160 },
@@ -988,30 +987,33 @@ export default function RcmPage() {
       );
     }
 
-if (col.type === "checkbox") {
-  if (activeTab === "history") {
-    return (
-      <div
-        style={{
-          width: "100%",
-          minHeight: "42px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          background: "transparent",
-        }}
-      >
-        <input
-          type="checkbox"
-          checked={Boolean(row[col.key])}
-          onChange={(e) =>
-            updateCell(rowIndex, col.key, e.target.checked)
-          }
-        />
-      </div>
-    );
-  }
-}
+    if (col.type === "checkbox") {
+      return (
+        <div
+          style={{
+            width: "100%",
+            minHeight: "42px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={row[col.key] === "Y"}
+            disabled={isLocked}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              const nextValue = checked ? "Y" : "";
+              handleSingleCellChange(rowIndex, col.key, nextValue);
+            }}
+            onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+            style={{ width: "16px", height: "16px", cursor: isLocked ? "default" : "pointer" }}
+          />
+        </div>
+      );
+    }
 
     if (col.type === "select") {
       return (
@@ -1196,7 +1198,7 @@ if (col.type === "checkbox") {
 
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
               <button onClick={(e) => {const rect = e.currentTarget.getBoundingClientRect();const popupWidth = 110;setFilterPos({top: rect.bottom + 4,left: rect.right - popupWidth});setOpenFilter((prev) => (prev === col.key ? null : col.key));}} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span></button>
-             
+      
 
               {openFilter === col.key && (
                 <div style={{position: "fixed",top: filterPos?.top ?? 0,left: filterPos?.left ?? 0,width: "150px",maxHeight: "260px",overflowY: "auto",background: "white",border: "1px solid #94a3b8",boxShadow: "0 8px 24px rgba(0,0,0,0.18)",zIndex: 99999,color: "#111827",borderRadius: "6px",textAlign: "left",}}>
