@@ -976,20 +976,6 @@ export default function RcmPage() {
       background: "transparent",
     };
 
-    if (activeTab === "history" || activeTab === "yearly") {
-      return (
-        <div
-          style={{
-            ...commonStyle,
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
-          }}
-        >
-          {row[col.key] ?? ""}
-        </div>
-      );
-    }
-
      if (col.type === "checkbox") {
   return (
     <div
@@ -1031,6 +1017,19 @@ export default function RcmPage() {
     </div>
   );
 }
+if (activeTab === "history" || activeTab === "yearly") {
+      return (
+        <div
+          style={{
+            ...commonStyle,
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {row[col.key] ?? ""}
+        </div>
+      );
+    }
 
     if (col.type === "select") {
       return (
