@@ -1005,7 +1005,7 @@ export default function RcmPage() {
       <input
         type="checkbox"
         checked={row[col.key] === "Y"}
-        disabled={activeTab !== "history" && isLocked}
+        disabled={isLocked}
         onChange={(e) => {
           const checked = e.target.checked;
           const nextValue = checked ? "Y" : "";
@@ -1025,7 +1025,7 @@ export default function RcmPage() {
         style={{
           width: "16px",
           height: "16px",
-          cursor: activeTab !== "history" && isLocked ? "default" : "pointer",
+          cursor: isLocked ? "default" : "pointer",
         }}
       />
     </div>
