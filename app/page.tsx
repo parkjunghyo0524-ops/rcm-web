@@ -1040,24 +1040,24 @@ export default function RcmPage() {
     }
 
 
-    if (col.type === "select") {
-      return (
-        <select
-          value={row[col.key] ?? ""}
-          disabled={isLocked}
-          onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
-          onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-          onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
-          style={{ ...commonStyle, minHeight: "42px" }}
-        >
-          {(col.options ?? [""]).map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
-      );
-    }
+    if ((col.type as Column["type"]) === "select") {
+  return (
+    <select
+      value={row[col.key] ?? ""}
+      disabled={isLocked}
+      onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
+      onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+      onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
+      style={{ ...commonStyle, minHeight: "42px" }}
+    >
+      {(col.options ?? [""]).map((option) => (
+        <option key={option} value={option}>
+          {option}
+        </option>
+      ))}
+    </select>
+  );
+}
 
     if (col.type === "date") {
       return (
