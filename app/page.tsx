@@ -116,6 +116,7 @@ export default function RcmPage() {
   ];
 
   const historyColumns: Column[] = [
+    { key: "checked", label: "", group: "변경이력", width: 50, type: "checkbox" },
     { key: "no", label: "No.", group: "변경이력", width: 60 },
     { key: "수정일", label: "수정일", group: "변경이력", width: 120 },
     { key: "Mega Process", label: "Mega Process", group: "변경이력", width: 160 },
@@ -987,33 +988,30 @@ export default function RcmPage() {
       );
     }
 
-    if (col.type === "checkbox") {
-      return (
-        <div
-          style={{
-            width: "100%",
-            minHeight: "42px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "transparent",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={row[col.key] === "Y"}
-            disabled={isLocked}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              const nextValue = checked ? "Y" : "";
-              handleSingleCellChange(rowIndex, col.key, nextValue);
-            }}
-            onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-            style={{ width: "16px", height: "16px", cursor: isLocked ? "default" : "pointer" }}
-          />
-        </div>
-      );
-    }
+if (col.type === "checkbox") {
+  if (activeTab === "history") {
+    return (
+      <div
+        style={{
+          width: "100%",
+          minHeight: "42px",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "transparent",
+        }}
+      >
+        <input
+          type="checkbox"
+          checked={Boolean(row[col.key])}
+          onChange={(e) =>
+            updateCell(rowIndex, col.key, e.target.checked)
+          }
+        />
+      </div>
+    );
+  }
+}
 
     if (col.type === "select") {
       return (
