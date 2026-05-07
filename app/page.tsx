@@ -778,7 +778,36 @@ export default function RcmPage() {
       }
       return;
     }
+  const handleDeleteHistoryRows = async () => {
+  if (activeTab !== "history") return;
 
+  const checkedRows = historyRows.filter((row) => row.checked === "Y");
+
+  if (checkedRows.length === 0) {
+    window.alert("삭제할 항목을 체크해주세요.");
+    return;
+  }
+
+  const confirmed = window.confirm(`${checkedRows.length}건을 삭제하시겠습니까?`);
+
+  if (!confirmed) return;
+
+  const nextHistoryRows = historyRows
+    .filter((row) => row.checked !== "Y")
+    .map((row, idx) => ({
+      ...row,
+      checked: "",
+      no: idx + 1,
+    }));
+
+  try {
+    await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, nextHistoryRows, completedYearData);
+    setHistoryRows(nextHistoryRows);
+    setMessage(`${checkedRows.length}건의 변경이력을 삭제했습니다.`);
+  } catch {
+    setMessage("변경이력 삭제 저장에 실패했습니다.");
+  }
+};
     if (activeTab === "previous") {
       const nextRowsByTab: Record<TabKey, RowData[]> = {
         ...rowsByTab,
@@ -1154,7 +1183,11 @@ if (activeTab === "history" || activeTab === "yearly") {
             초기화
           </button>
         )}
-
+        {activeTab === "history" && (
+  <button onClick={handleDeleteHistoryRows} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+    삭제
+  </button>
+)}
         {activeTab === "current" && (
           <button onClick={handleFinalizeCurrentYear} style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
             최종완료
