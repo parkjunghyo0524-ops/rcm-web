@@ -1293,7 +1293,7 @@ if (activeTab === "history" || activeTab === "yearly") {
                 </div>
               )}
             </div>
-            0}
+            )}
           </th>
         ))}
             </tr>
