@@ -117,7 +117,7 @@ export default function RcmPage() {
   ];
 
   const historyColumns: Column[] = [
-    { key: "checked", label: "", group: "변경이력", width: 50, type: "checkbox" },
+    { key: "checked", label: "삭제", group: "변경이력", width: 50, type: "checkbox" },
     { key: "no", label: "No.", group: "변경이력", width: 60 },
     { key: "수정일", label: "수정일", group: "변경이력", width: 120 },
     { key: "Mega Process", label: "Mega Process", group: "변경이력", width: 160 },
