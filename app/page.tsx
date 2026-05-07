@@ -1265,6 +1265,7 @@ if (activeTab === "history" || activeTab === "yearly") {
               {col.label}
             </div>
 
+{!(activeTab === "history" && col.key === "checked") && (
             <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
               <button onClick={(e) => {const rect = e.currentTarget.getBoundingClientRect();const popupWidth = 110;setFilterPos({top: rect.bottom + 4,left: rect.right - popupWidth});setOpenFilter((prev) => (prev === col.key ? null : col.key));}} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span></button>
       
@@ -1277,7 +1278,7 @@ if (activeTab === "history" || activeTab === "yearly") {
                       초기화
                     </button>
                   </div>
-
+)}
                   <div style={{ padding: "8px" }}>
                     {optionsByColumn[col.key].length === 0 ? (
                       <div style={{ fontSize: "12px", color: "#6b7280" }}>값 없음</div>
