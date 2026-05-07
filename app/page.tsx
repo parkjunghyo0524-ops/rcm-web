@@ -778,6 +778,8 @@ export default function RcmPage() {
       }
       return;
     }
+  };
+
   const handleDeleteHistoryRows = async () => {
   if (activeTab !== "history") return;
 
