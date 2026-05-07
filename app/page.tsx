@@ -989,32 +989,36 @@ export default function RcmPage() {
     }
 
      if (col.type === "checkbox") {
-      return (
-        <div
-          style={{
-            width: "100%",
-            minHeight: "42px",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            background: "transparent",
-          }}
-        >
-          <input
-            type="checkbox"
-            checked={row[col.key] === "Y"}
-            disabled={isLocked}
-            onChange={(e) => {
-              const checked = e.target.checked;
-              const nextValue = checked ? "Y" : "";
-              handleSingleCellChange(rowIndex, col.key, nextValue);
-            }}
-            onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-            style={{ width: "16px", height: "16px", cursor: isLocked ? "default" : "pointer" }}
-          />
-        </div>
-      );
-    }
+  return (
+    <div
+      style={{
+        width: "100%",
+        minHeight: "42px",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        background: "transparent",
+      }}
+    >
+      <input
+        type="checkbox"
+        checked={row[col.key] === "Y"}
+        disabled={isLocked}
+        onChange={(e) => {
+          const checked = e.target.checked;
+          const nextValue = checked ? "Y" : "";
+          handleSingleCellChange(rowIndex, col.key, nextValue);
+        }}
+        onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+        style={{
+          width: "16px",
+          height: "16px",
+          cursor: isLocked ? "default" : "pointer",
+        }}
+      />
+    </div>
+  );
+}
 
     if (col.type === "select") {
       return (
