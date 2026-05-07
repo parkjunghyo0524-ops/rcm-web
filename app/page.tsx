@@ -16,6 +16,7 @@ type RowData = Record<string, string>;
 type TabKey = "current" | "previous" | "change" | "history" | "yearly";
 
 type HistoryRow = {
+  checked?: string;
   no: number;
   수정일: string;
   "Mega Process": string;
@@ -172,6 +173,7 @@ export default function RcmPage() {
   const activeRows =
     activeTab === "history"
       ? historyRows.map((row) => ({
+          checked: row.checked ?? "",
           no: String(row.no),
           수정일: row["수정일"],
           "Mega Process": row["Mega Process"],
@@ -1003,17 +1005,27 @@ export default function RcmPage() {
       <input
         type="checkbox"
         checked={row[col.key] === "Y"}
-        disabled={isLocked}
+        disabled={activeTab !== "history" && isLocked}
         onChange={(e) => {
           const checked = e.target.checked;
           const nextValue = checked ? "Y" : "";
+
+          if (activeTab === "history") {
+            setHistoryRows((prev) =>
+              prev.map((r, idx) =>
+                idx === rowIndex ? { ...r, checked: nextValue } : r
+              )
+            );
+            return;
+          }
+
           handleSingleCellChange(rowIndex, col.key, nextValue);
         }}
         onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
         style={{
           width: "16px",
           height: "16px",
-          cursor: isLocked ? "default" : "pointer",
+          cursor: activeTab !== "history" && isLocked ? "default" : "pointer",
         }}
       />
     </div>
