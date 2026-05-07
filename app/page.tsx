@@ -1010,7 +1010,7 @@ export default function RcmPage() {
           const checked = e.target.checked;
           const nextValue = checked ? "Y" : "";
 
-          if (activeTab === "history") {
+          if ((activeTab as TabKey) === "history") {
             setHistoryRows((prev) =>
               prev.map((r, idx) =>
                 idx === rowIndex ? { ...r, checked: nextValue } : r
