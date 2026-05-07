@@ -1278,7 +1278,6 @@ if (activeTab === "history" || activeTab === "yearly") {
                       초기화
                     </button>
                   </div>
-)}
                   <div style={{ padding: "8px" }}>
                     {optionsByColumn[col.key].length === 0 ? (
                       <div style={{ fontSize: "12px", color: "#6b7280" }}>값 없음</div>
@@ -1294,6 +1293,7 @@ if (activeTab === "history" || activeTab === "yearly") {
                 </div>
               )}
             </div>
+            0}
           </th>
         ))}
             </tr>
