@@ -1127,7 +1127,7 @@ if (activeTab === "history" || activeTab === "yearly") {
   };
 
   return (
-    <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", minHeight: "100vh" }}>
+    return ( <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "14px" }}>
         <img src="/logo.png" alt="logo" style={{ height: "48px", background: "white" }} />
         <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0 }}>RCM</h1>
@@ -1248,7 +1248,7 @@ if (activeTab === "history" || activeTab === "yearly") {
         )}
       </div>
 
-<div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflowX: "auto", overflowY: "visible", maxHeight: "78vh", backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 1px" }}>
+<div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflow: "auto", flex: 1, backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 1px" }}>
   <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
     <thead>
       <tr>
