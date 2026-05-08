@@ -525,16 +525,38 @@ export default function RcmPage() {
   };
 
   const handleSearchCurrentRows = () => {
-    const keyword = changeSearch.trim().toLowerCase();
+  const keyword = changeSearch.trim().toLowerCase();
 
-    if (!keyword) {
-      setRowsByTab((prev) => ({
-        ...prev,
-        change: [],
-      }));
-      setMessage("검색어를 입력해주세요.");
-      return;
-    }
+  if (!keyword) {
+    setRowsByTab((prev) => ({
+      ...prev,
+      change: [],
+    }));
+    setMessage("Control No.를 입력해주세요.");
+    return;
+  }
+
+  const currentRows = rowsByTab.current ?? [];
+
+  const results = currentRows.filter(
+    (row) =>
+      String(row["Control No."] ?? "")
+        .trim()
+        .toLowerCase() === keyword
+  );
+
+  const mappedResults = results.map((row) => ({
+    ...buildEmptyRow("change"),
+    ...row,
+  }));
+
+  setRowsByTab((prev) => ({
+    ...prev,
+    change: mappedResults,
+  }));
+
+  setMessage(`${results.length}건의 Control No. 데이터를 조회했습니다.`);
+};
 
     const currentRows = rowsByTab.current ?? [];
 
@@ -1160,7 +1182,7 @@ if (activeTab === "history" || activeTab === "yearly") {
             <input
               value={changeSearch}
               onChange={(e) => setChangeSearch(e.target.value)}
-              placeholder="Control No., Control Name 등으로 검색"
+              placeholder="Control No. 입력"
               style={{ padding: "10px 12px", width: "320px", border: "1px solid #b8c4d6", borderRadius: "6px", background: "white" }}
             />
             <button onClick={handleSearchCurrentRows} style={{ background: "#334155", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
