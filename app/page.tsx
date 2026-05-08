@@ -1126,7 +1126,6 @@ if (activeTab === "history" || activeTab === "yearly") {
     );
   };
 
-  return (
     return ( <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "14px" }}>
         <img src="/logo.png" alt="logo" style={{ height: "48px", background: "white" }} />
