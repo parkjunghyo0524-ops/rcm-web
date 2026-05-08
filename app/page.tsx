@@ -1102,15 +1102,16 @@ if (activeTab === "history" || activeTab === "yearly") {
     if (col.type === "date") {
       return (
         <input
-          type="date"
-          value={row[col.key] ?? ""}
-          disabled={isLocked}
-          readOnly={isLocked}
-          onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
-          onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-          onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
-          style={{ ...commonStyle, minHeight: "42px" }}
-        />
+  type="text"
+  placeholder="YYYY-MM-DD"
+  value={row[col.key] ?? ""}
+  disabled={isLocked}
+  readOnly={isLocked}
+  onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
+  onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+  onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
+  style={{ ...commonStyle, minHeight: "42px" }}
+/>
       );
     }
 
