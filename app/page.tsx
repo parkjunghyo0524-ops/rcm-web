@@ -524,8 +524,6 @@ export default function RcmPage() {
     }
   };
 
-  commonColumns.some((col) => String(row[col.key] ?? "").toLowerCase().includes(keyword))
-
     const currentRows = rowsByTab.current ?? [];
 
     const results = currentRows.filter((row) =>
