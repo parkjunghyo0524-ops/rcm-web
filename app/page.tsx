@@ -524,10 +524,22 @@ export default function RcmPage() {
     }
   };
 
+  const handleSearchCurrentRows = () => {
+    const keyword = changeSearch.trim().toLowerCase();
+
+    if (!keyword) {
+      setRowsByTab((prev) => ({
+        ...prev,
+        change: [],
+      }));
+      setMessage("Control No.를 입력해주세요.");
+      return;
+    }
+
     const currentRows = rowsByTab.current ?? [];
 
-    const results = currentRows.filter((row) =>
-      commonColumns.some((col) => String(row[col.key] ?? "").toLowerCase().includes(keyword))
+    const results = currentRows.filter(
+      (row) => String(row["Control No."] ?? "").trim().toLowerCase() === keyword
     );
 
     const mappedResults = results.map((row) => ({
@@ -540,7 +552,7 @@ export default function RcmPage() {
       change: mappedResults,
     }));
 
-    setMessage(`${results.length}건의 당기 RCM 데이터를 조회했습니다.`);
+    setMessage(`${results.length}건의 Control No. 데이터를 조회했습니다.`);
   };
 
   const handleApplyChanges = async () => {
@@ -1112,8 +1124,9 @@ if (activeTab === "history" || activeTab === "yearly") {
         style={{ ...commonStyle, resize: "vertical" }}
       />
     );
+  };
 
-    return ( <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+  return ( <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "14px" }}>
         <img src="/logo.png" alt="logo" style={{ height: "48px", background: "white" }} />
         <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0 }}>RCM</h1>
