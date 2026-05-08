@@ -1155,7 +1155,7 @@ if (activeTab === "history" || activeTab === "yearly") {
 
       {activeTab === "change" && (
         <div style={{ marginBottom: "14px", background: "white", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "14px" }}>
-          <div style={{ fontSize: "13px", color: "#475569", marginBottom: "8px", fontWeight: 600 }}>당기 RCM 조회</div>
+          <div style={{ fontSize: "13px", color: "#475569", marginBottom: "8px", fontWeight: 600 }}>당기 Control No.</div>
           <div style={{ display: "flex", gap: "8px", alignItems: "center", marginBottom: "12px", flexWrap: "wrap" }}>
             <input
               value={changeSearch}
