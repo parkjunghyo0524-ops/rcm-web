@@ -524,39 +524,7 @@ export default function RcmPage() {
     }
   };
 
-  const handleSearchCurrentRows = () => {
-  const keyword = changeSearch.trim().toLowerCase();
-
-  if (!keyword) {
-    setRowsByTab((prev) => ({
-      ...prev,
-      change: [],
-    }));
-    setMessage("Control No.를 입력해주세요.");
-    return;
-  }
-
-  const currentRows = rowsByTab.current ?? [];
-
-  const results = currentRows.filter(
-    (row) =>
-      String(row["Control No."] ?? "")
-        .trim()
-        .toLowerCase() === keyword
-  );
-
-  const mappedResults = results.map((row) => ({
-    ...buildEmptyRow("change"),
-    ...row,
-  }));
-
-  setRowsByTab((prev) => ({
-    ...prev,
-    change: mappedResults,
-  }));
-
-  setMessage(`${results.length}건의 Control No. 데이터를 조회했습니다.`);
-};
+  commonColumns.some((col) => String(row[col.key] ?? "").toLowerCase().includes(keyword))
 
     const currentRows = rowsByTab.current ?? [];
 
