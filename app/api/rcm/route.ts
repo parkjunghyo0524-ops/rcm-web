@@ -23,17 +23,42 @@ export async function GET() {
 
 // 저장
 export async function POST(req: Request) {
-  const body = await req.json();
+  try {
+    const body = await req.json();
 
-  const { error } = await supabase.from("rcm_data").upsert({
-    id: 1,
-    data: body,
-    updated_at: new Date().toISOString(),
-  });
+    const rows = body.rowsByTab || {};
+    const historyRows = body.historyRows || [];
+    const yearValue = body.yearValue || "";
+    const lockedTabs = body.lockedTabs || {};
+    const completedYearData = body.completedYearData || {};
 
-  if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const chunkData = {
+      rowsByTab: rows,
+      historyRows,
+      yearValue,
+      lockedTabs,
+      completedYearData,
+    };
+
+    const { error } = await supabase.from("rcm_data").upsert({
+      id: 1,
+      data: chunkData,
+      updated_at: new Date().toISOString(),
+    });
+
+    if (error) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (err: any) {
+    return NextResponse.json(
+      { error: err.message },
+      { status: 500 }
+    );
   }
-
-  return NextResponse.json({ success: true });
 }
