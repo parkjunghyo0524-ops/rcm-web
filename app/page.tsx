@@ -247,34 +247,69 @@ export default function RcmPage() {
   }, []);
 
   const saveToLocalStorage = async (
-    nextRowsByTab: Record<TabKey, RowData[]>,
-    nextYearValue: string,
-    nextLockedTabs: { current: boolean; previous: boolean },
-    nextHistoryRows: HistoryRow[],
-    nextCompletedYearData: Record<string, RowData[]>
-  ) => {
-    const res = await fetch("/api/rcm", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        rowsByTab: {
-          current: nextRowsByTab.current,
-          previous: nextRowsByTab.previous,
-          change: nextRowsByTab.change,
-        },
-        yearValue: nextYearValue,
-        lockedTabs: nextLockedTabs,
-        historyRows: nextHistoryRows,
-        completedYearData: nextCompletedYearData,
-      }),
-    });
+  nextRowsByTab: Record<TabKey, RowData[]>,
+  nextYearValue: string,
+  nextLockedTabs: { current: boolean; previous: boolean },
+  nextHistoryRows: HistoryRow[],
+  nextCompletedYearData: Record<string, RowData[]>
+) => {
+  const chunkSize = 50;
 
-    if (!res.ok) {
-      throw new Error("서버 저장 실패");
-    }
+  const payload = {
+    rowsByTab: {
+      current: nextRowsByTab.current,
+      previous: nextRowsByTab.previous,
+      change: nextRowsByTab.change,
+    },
+    yearValue: nextYearValue,
+    lockedTabs: nextLockedTabs,
+    historyRows: nextHistoryRows,
+    completedYearData: nextCompletedYearData,
   };
+
+  const entries = Object.entries(payload.rowsByTab) as [string, RowData[]][];
+
+  for (const [tabName, rows] of entries) {
+    for (let i = 0; i < rows.length; i += chunkSize) {
+      const res = await fetch("/api/rcm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode: "chunk",
+          tabName,
+          startIndex: i,
+          rows: rows.slice(i, i + chunkSize),
+          yearValue: nextYearValue,
+          lockedTabs: nextLockedTabs,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("서버 저장 실패");
+      }
+    }
+  }
+
+  const metaRes = await fetch("/api/rcm", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      mode: "meta",
+      yearValue: nextYearValue,
+      lockedTabs: nextLockedTabs,
+      historyRows: nextHistoryRows,
+      completedYearData: nextCompletedYearData,
+    }),
+  });
+
+  if (!metaRes.ok) {
+    throw new Error("서버 저장 실패");
+  }
+};
 
   const updateActiveRows = (updater: (prev: RowData[]) => RowData[]) => {
     if (activeTab === "history" || activeTab === "yearly") return;
