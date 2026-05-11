@@ -298,12 +298,11 @@ export default function RcmPage() {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      mode: "meta",
-      yearValue: nextYearValue,
-      lockedTabs: nextLockedTabs,
-      historyRows: nextHistoryRows,
-      completedYearData: nextCompletedYearData,
-    }),
+  mode: "meta",
+  yearValue: nextYearValue,
+  lockedTabs: nextLockedTabs,
+  historyRows: nextHistoryRows,
+}),
   });
 
   if (!metaRes.ok) {
