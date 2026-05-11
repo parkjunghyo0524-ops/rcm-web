@@ -1,64 +1,91 @@
 import { supabase } from "@/lib/supabase";
 import { NextResponse } from "next/server";
 
-// 조회
 export async function GET() {
   const { data, error } = await supabase
     .from("rcm_data")
     .select("*")
-    .order("updated_at", { ascending: false });
+    .eq("id", 1)
+    .single();
 
-  if (error) {
+  if (error && error.code !== "PGRST116") {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }
 
   return NextResponse.json({
-    rowsByTab: data?.[0]?.data?.rowsByTab ?? {},
-    yearValue: data?.[0]?.data?.yearValue ?? "",
-    lockedTabs: data?.[0]?.data?.lockedTabs ?? {},
-    historyRows: data?.[0]?.data?.historyRows ?? [],
-    completedYearData: data?.[0]?.data?.completedYearData ?? {},
+    rowsByTab: data?.data?.rowsByTab ?? {},
+    yearValue: data?.data?.yearValue ?? "",
+    lockedTabs: data?.data?.lockedTabs ?? {},
+    historyRows: data?.data?.historyRows ?? [],
+    completedYearData: data?.data?.completedYearData ?? {},
   });
 }
 
-// 저장
 export async function POST(req: Request) {
   try {
     const body = await req.json();
 
-    const rows = body.rowsByTab || {};
-    const historyRows = body.historyRows || [];
-    const yearValue = body.yearValue || "";
-    const lockedTabs = body.lockedTabs || {};
-    const completedYearData = body.completedYearData || {};
+    const { data: existingData, error: readError } = await supabase
+      .from("rcm_data")
+      .select("data")
+      .eq("id", 1)
+      .single();
 
-    const chunkData = {
-      rowsByTab: rows,
-      historyRows,
-      yearValue,
-      lockedTabs,
-      completedYearData,
+    if (readError && readError.code !== "PGRST116") {
+      return NextResponse.json({ error: readError.message }, { status: 500 });
+    }
+
+    const currentData = existingData?.data ?? {
+      rowsByTab: { current: [], previous: [], change: [] },
+      yearValue: "",
+      lockedTabs: {},
+      historyRows: [],
+      completedYearData: {},
     };
 
-    const { error } = await supabase.from("rcm_data").upsert({
+    if (body.mode === "chunk") {
+      const tabName = body.tabName;
+      const startIndex = body.startIndex ?? 0;
+      const rows = body.rows ?? [];
+
+      const nextRowsByTab = {
+        current: currentData.rowsByTab?.current ?? [],
+        previous: currentData.rowsByTab?.previous ?? [],
+        change: currentData.rowsByTab?.change ?? [],
+      };
+
+      const targetRows = [...(nextRowsByTab[tabName as "current" | "previous" | "change"] ?? [])];
+
+      rows.forEach((row: any, idx: number) => {
+        targetRows[startIndex + idx] = row;
+      });
+
+      nextRowsByTab[tabName as "current" | "previous" | "change"] = targetRows;
+
+      currentData.rowsByTab = nextRowsByTab;
+      currentData.yearValue = body.yearValue ?? currentData.yearValue ?? "";
+      currentData.lockedTabs = body.lockedTabs ?? currentData.lockedTabs ?? {};
+    }
+
+    if (body.mode === "meta") {
+      currentData.yearValue = body.yearValue ?? "";
+      currentData.lockedTabs = body.lockedTabs ?? {};
+      currentData.historyRows = body.historyRows ?? [];
+      currentData.completedYearData = body.completedYearData ?? {};
+    }
+
+    const { error: saveError } = await supabase.from("rcm_data").upsert({
       id: 1,
-      data: chunkData,
+      data: currentData,
       updated_at: new Date().toISOString(),
     });
 
-    if (error) {
-      return NextResponse.json(
-        { error: error.message },
-        { status: 500 }
-      );
+    if (saveError) {
+      return NextResponse.json({ error: saveError.message }, { status: 500 });
     }
 
     return NextResponse.json({ success: true });
-
   } catch (err: any) {
-    return NextResponse.json(
-      { error: err.message },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: err.message }, { status: 500 });
   }
 }
