@@ -201,11 +201,9 @@ export default function RcmPage() {
         if (data?.rowsByTab) {
           setRowsByTab({
             current:
-  Array.isArray(data.rowsByTab.current) && data.rowsByTab.current.length > 0
-    ? data.rowsByTab.current
-    : Array.isArray(data.rowsByTab.change) && data.rowsByTab.change.length > 0
-    ? data.rowsByTab.change
-    : [buildEmptyRow("current")],
+              Array.isArray(data.rowsByTab.current) && data.rowsByTab.current.length > 0
+                ? data.rowsByTab.current
+                : [buildEmptyRow("current")],
             previous:
               Array.isArray(data.rowsByTab.previous) && data.rowsByTab.previous.length > 0
                 ? data.rowsByTab.previous
