@@ -434,7 +434,7 @@ export default function RcmPage() {
               newRow[targetColumn.key] =
                 cell === "Y" || cell === "TRUE" || cell === "true" ? "Y" : "";
             } else {
-              newRow[targetColumn.key] = cell;
+              newRow[targetColumn.key] = cell.replace(/\r?\n|\r/g, " ").trim();
             }
           }
         });
