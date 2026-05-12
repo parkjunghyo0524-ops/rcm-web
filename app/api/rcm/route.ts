@@ -74,10 +74,13 @@ export async function POST(req: Request) {
       currentData.completedYearData = body.completedYearData ?? {};
     }
 
-    const { error: saveError } = await supabase.from("rcm_data").insert({
-  data: currentData,
-  updated_at: new Date().toISOString(),
-});
+    const { error: saveError } = await supabase
+  .from("rcm_data")
+  .upsert({
+    id: 1,
+    data: currentData,
+    updated_at: new Date().toISOString(),
+  });
 
     if (saveError) {
       return NextResponse.json({ error: saveError.message }, { status: 500 });
