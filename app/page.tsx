@@ -287,8 +287,9 @@ export default function RcmPage() {
       });
 
       if (!res.ok) {
-        throw new Error("서버 저장 실패");
-      }
+  const errorText = await res.text();
+  throw new Error(errorText);
+}
     }
   }
 
@@ -307,8 +308,9 @@ export default function RcmPage() {
   });
 
   if (!metaRes.ok) {
-    throw new Error("서버 저장 실패");
-  }
+  const errorText = await metaRes.text();
+  throw new Error(errorText);
+}
 };
 
   const updateActiveRows = (updater: (prev: RowData[]) => RowData[]) => {
@@ -554,9 +556,9 @@ export default function RcmPage() {
         setLockedTabs(nextLockedTabs);
         setMessage(`${activeTab === "current" ? "당기 RCM" : "전기 RCM"} 탭이 저장되었습니다.`);
       }
-    } catch {
-      setMessage("저장에 실패했습니다.");
-    }
+    } catch (e: any) {
+  setMessage(`저장 실패: ${e.message}`);
+}
   };
 
   const handleSearchCurrentRows = () => {
