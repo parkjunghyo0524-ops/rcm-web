@@ -244,7 +244,7 @@ const message = messagesByTab[activeTab] ?? "";
         }
       } catch (e) {
         console.error("데이터 불러오기 실패", e);
-        setTabMessage("서버 데이터를 불러오지 못했습니다.");
+        setTabMessage(activeTab, "서버 데이터를 불러오지 못했습니다.");
       }
     };
 
