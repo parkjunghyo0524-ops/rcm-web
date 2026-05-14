@@ -77,9 +77,7 @@ export async function POST(req: Request) {
     const { error: saveError } = await supabase
   .from("rcm_data")
   .update({
-    year: currentData.yearValue || body.yearValue || "default",
     data: currentData,
-    updated_at: new Date().toISOString(),
   })
   .eq("id", 1);
 
