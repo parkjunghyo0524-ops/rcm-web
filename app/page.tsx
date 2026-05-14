@@ -875,7 +875,7 @@ export default function RcmPage() {
         await saveToLocalStorage(
   nextRowsByTab,
   yearValue,
-  nextLockedTabs,
+  lockedTabs,
   historyRows,
   completedYearData,
   ["change"]
