@@ -244,7 +244,7 @@ const message = messagesByTab[activeTab] ?? "";
         }
       } catch (e) {
         console.error("데이터 불러오기 실패", e);
-        setTabMessage(activeTab, "서버 데이터를 불러오지 못했습니다.");
+        setTabMessage("current", "서버 데이터를 불러오지 못했습니다.");
       }
     };
 
@@ -574,10 +574,10 @@ const message = messagesByTab[activeTab] ?? "";
 
       if (activeTab === "current" || activeTab === "previous") {
         setLockedTabs(nextLockedTabs);
-        setTabMessage(`${activeTab === "current" ? "당기 RCM" : "전기 RCM"} 탭이 저장되었습니다.`);
+        setTabMessage(activeTab, `${activeTab === "current" ? "당기 RCM" : "전기 RCM"} 탭이 저장되었습니다.`);
       }
     } catch (e: any) {
-  setTabMessage(`저장 실패: ${e.message}`);
+  setTabMessage(activeTab, `저장 실패: ${e.message}`);
 }
   };
 
@@ -589,7 +589,7 @@ const message = messagesByTab[activeTab] ?? "";
         ...prev,
         change: [],
       }));
-      setTabMessage("Control No.를 입력해주세요.");
+      setTabMessage("change", "Control No.를 입력해주세요.");
       return;
     }
 
@@ -609,21 +609,21 @@ const message = messagesByTab[activeTab] ?? "";
       change: mappedResults,
     }));
 
-    setTabMessage(`${results.length}건의 Control No. 데이터를 조회했습니다.`);
+    setTabMessage("change", `${results.length}건의 Control No. 데이터를 조회했습니다.`);
   };
 
   const handleApplyChanges = async () => {
     const confirmed = window.confirm("적용하시겠습니까?");
 
     if (!confirmed) {
-      setTabMessage("적용이 취소되었습니다.");
+      setTabMessage("change", "적용이 취소되었습니다.");
       return;
     }
 
     const targetRows = rowsByTab.change ?? [];
 
     if (targetRows.length === 0) {
-      setTabMessage("적용할 수정사항이 없습니다.");
+      setTabMessage("change", "적용할 수정사항이 없습니다.");
       return;
     }
 
@@ -639,7 +639,7 @@ const message = messagesByTab[activeTab] ?? "";
     const checkedRows = targetRows.filter((row) => row["적용"] === "Y");
 
     if (checkedRows.length === 0) {
-      setTabMessage("적용여부가 체크된 수정사항이 없습니다.");
+      setTabMessage("change", "적용여부가 체크된 수정사항이 없습니다.");
       return;
     }
 
@@ -750,9 +750,9 @@ const message = messagesByTab[activeTab] ?? "";
 );
       setRowsByTab(nextRowsByTab);
       setHistoryRows(normalizedHistoryRows);
-      setTabMessage(`${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
+      setTabMessage("change", `${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
     } catch (e: any) {
-  setTabMessage(`적용사항 저장 실패: ${e.message}`);
+  setTabMessage("change", `적용사항 저장 실패: ${e.message}`);
 }
   };
 
@@ -767,7 +767,7 @@ const message = messagesByTab[activeTab] ?? "";
     const confirmed = window.confirm("최종완료된 RCM은 수정할 수 없습니다. 최종완료하시겠습니까");
 
     if (!confirmed) {
-      setTabMessage("최종완료가 취소되었습니다.");
+      setTabMessage("current", "최종완료가 취소되었습니다.");
       return;
     }
 
@@ -784,13 +784,13 @@ const message = messagesByTab[activeTab] ?? "";
     };
 
     try {
-      await saveToLocalStorage(rowsByTab, yearValue, nextLockedTabs, historyRows, nextCompletedYearData);
+      await saveToLocalStorage(rowsByTab, yearValue, nextLockedTabs, historyRows, nextCompletedYearData, ["current"]);
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(year);
       setLockedTabs(nextLockedTabs);
-      setTabMessage(`${year}년 RCM이 최종완료되어 년도별 RCM 탭에 반영되었습니다.`);
+      setTabMessage("current", `${year}년 RCM이 최종완료되어 년도별 RCM 탭에 반영되었습니다.`);
     } catch {
-      setTabMessage("최종완료 저장에 실패했습니다.");
+      setTabMessage("current", "최종완료 저장에 실패했습니다.");
     }
   };
 
@@ -811,12 +811,12 @@ const message = messagesByTab[activeTab] ?? "";
     const nextSelectedYear = remainingYears[0] ?? "";
 
     try {
-      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, historyRows, nextCompletedYearData);
+      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, historyRows, nextCompletedYearData, []);
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(nextSelectedYear);
-      setTabMessage(`${selectedYear}년 RCM이 년도별 RCM에서 삭제되었습니다.`);
+      setTabMessage("yearly", `${selectedYear}년 RCM이 년도별 RCM에서 삭제되었습니다.`);
     } catch {
-      setTabMessage("년도별 RCM 삭제 저장에 실패했습니다.");
+      setTabMessage("yearly", "년도별 RCM 삭제 저장에 실패했습니다.");
     }
   };
 
@@ -843,9 +843,9 @@ const message = messagesByTab[activeTab] ?? "";
 );
         setRowsByTab(nextRowsByTab);
         setLockedTabs(nextLockedTabs);
-        setTabMessage("당기 RCM 탭을 초기화했습니다.");
+        setTabMessage("current", "당기 RCM 탭을 초기화했습니다.");
       } catch {
-        setTabMessage("초기화 저장에 실패했습니다.");
+        setTabMessage(activeTab, "초기화 저장에 실패했습니다.");
       }
       return;
     }
@@ -872,9 +872,9 @@ const message = messagesByTab[activeTab] ?? "";
 );
         setRowsByTab(nextRowsByTab);
         setLockedTabs(nextLockedTabs);
-        setTabMessage("전기 RCM 탭을 초기화했습니다.");
+        setTabMessage("previous", "전기 RCM 탭을 초기화했습니다.");
       } catch {
-        setTabMessage("초기화 저장에 실패했습니다.");
+        setTabMessage(activeTab, "초기화 저장에 실패했습니다.");
       }
       return;
     }
@@ -897,20 +897,20 @@ const message = messagesByTab[activeTab] ?? "";
 );
         setRowsByTab(nextRowsByTab);
         setChangeSearch("");
-        setTabMessage("수정사항 탭을 초기화했습니다.");
+        setTabMessage("change", "수정사항 탭을 초기화했습니다.");
       } catch {
-        setTabMessage("초기화 저장에 실패했습니다.");
+        setTabMessage(activeTab, "초기화 저장에 실패했습니다.");
       }
       return;
     }
 
     if (activeTab === "history") {
       try {
-        await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, [], completedYearData);
+        await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, [], completedYearData, []);
         setHistoryRows([]);
-        setTabMessage("변경이력 탭을 초기화했습니다.");
+        setTabMessage("history", "변경이력 탭을 초기화했습니다.");
       } catch {
-        setTabMessage("변경이력 초기화 저장에 실패했습니다.");
+        setTabMessage("history", "변경이력 초기화 저장에 실패했습니다.");
       }
     }
   };
@@ -937,11 +937,11 @@ const message = messagesByTab[activeTab] ?? "";
       }));
 
     try {
-      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, nextHistoryRows, completedYearData);
+      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, nextHistoryRows, completedYearData, []);
       setHistoryRows(nextHistoryRows);
-      setTabMessage(`${checkedRows.length}건의 변경이력을 삭제했습니다.`);
+      setTabMessage("history", `${checkedRows.length}건의 변경이력을 삭제했습니다.`);
     } catch {
-      setTabMessage("변경이력 삭제 저장에 실패했습니다.");
+      setTabMessage("history", "변경이력 삭제 저장에 실패했습니다.");
     }
   };
   const handleAddChangeRow = () => {
@@ -949,7 +949,7 @@ const message = messagesByTab[activeTab] ?? "";
       ...prev,
       change: [...(prev.change ?? []), buildEmptyRow("change")],
     }));
-    setTabMessage("수정사항 탭에 빈 행을 추가했습니다.");
+    setTabMessage("change", "수정사항 탭에 빈 행을 추가했습니다.");
   };
 
   const handleDownloadExcel = () => {
@@ -1063,7 +1063,7 @@ const message = messagesByTab[activeTab] ?? "";
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
 
-    setTabMessage(`${tabNameMap[activeTab]} 탭을 엑셀로 다운로드했습니다.`);
+    setTabMessage(activeTab, `${tabNameMap[activeTab]} 탭을 엑셀로 다운로드했습니다.`);
   };
 
   const tabButtonStyle = (tab: TabKey): React.CSSProperties => ({
