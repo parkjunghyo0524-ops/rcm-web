@@ -251,9 +251,10 @@ export default function RcmPage() {
   nextYearValue: string,
   nextLockedTabs: { current: boolean; previous: boolean },
   nextHistoryRows: HistoryRow[],
-  nextCompletedYearData: Record<string, RowData[]>
+  nextCompletedYearData: Record<string, RowData[]>,
+  tabsToSave: Array<"current" | "previous" | "change"> = ["current", "previous", "change"]
 ) => {
-  const chunkSize = 20;
+  const chunkSize = 100;
 
   const payload = {
     rowsByTab: {
@@ -267,7 +268,10 @@ export default function RcmPage() {
     completedYearData: nextCompletedYearData,
   };
 
-  const entries = Object.entries(payload.rowsByTab) as [string, RowData[]][];
+  const entries = tabsToSave.map((tabName) => [
+  tabName,
+  payload.rowsByTab[tabName],
+]) as [string, RowData[]][];
 
   for (const [tabName, rows] of entries) {
     for (let i = 0; i < rows.length; i += chunkSize) {
@@ -545,12 +549,13 @@ export default function RcmPage() {
       const nextYearValue = yearValue;
 
       await saveToLocalStorage(
-        nextRowsByTab,
-        nextYearValue,
-        nextLockedTabs,
-        historyRows,
-        completedYearData
-      );
+  nextRowsByTab,
+  nextYearValue,
+  nextLockedTabs,
+  historyRows,
+  completedYearData,
+  [activeTab as "current" | "previous" | "change"]
+);
 
       if (activeTab === "current" || activeTab === "previous") {
         setLockedTabs(nextLockedTabs);
@@ -720,7 +725,14 @@ export default function RcmPage() {
     };
 
     try {
-      await saveToLocalStorage(nextRowsByTab, yearValue, lockedTabs, normalizedHistoryRows, completedYearData);
+      await saveToLocalStorage(
+  nextRowsByTab,
+  yearValue,
+  lockedTabs,
+  normalizedHistoryRows,
+  completedYearData,
+  ["current", "change"]
+);
       setRowsByTab(nextRowsByTab);
       setHistoryRows(normalizedHistoryRows);
       setMessage(`${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
@@ -806,7 +818,14 @@ export default function RcmPage() {
         current: false,
       };
       try {
-        await saveToLocalStorage(nextRowsByTab, yearValue, nextLockedTabs, historyRows, completedYearData);
+        await saveToLocalStorage(
+  nextRowsByTab,
+  yearValue,
+  nextLockedTabs,
+  historyRows,
+  completedYearData,
+  ["current"]
+);
         setRowsByTab(nextRowsByTab);
         setLockedTabs(nextLockedTabs);
         setMessage("당기 RCM 탭을 초기화했습니다.");
@@ -828,7 +847,14 @@ export default function RcmPage() {
         previous: false,
       };
       try {
-        await saveToLocalStorage(nextRowsByTab, yearValue, nextLockedTabs, historyRows, completedYearData);
+        await saveToLocalStorage(
+  nextRowsByTab,
+  yearValue,
+  nextLockedTabs,
+  historyRows,
+  completedYearData,
+  ["previous"]
+);
         setRowsByTab(nextRowsByTab);
         setLockedTabs(nextLockedTabs);
         setMessage("전기 RCM 탭을 초기화했습니다.");
@@ -846,7 +872,14 @@ export default function RcmPage() {
         yearly: [],
       };
       try {
-        await saveToLocalStorage(nextRowsByTab, yearValue, lockedTabs, historyRows, completedYearData);
+        await saveToLocalStorage(
+  nextRowsByTab,
+  yearValue,
+  nextLockedTabs,
+  historyRows,
+  completedYearData,
+  ["change"]
+);
         setRowsByTab(nextRowsByTab);
         setChangeSearch("");
         setMessage("수정사항 탭을 초기화했습니다.");
