@@ -552,7 +552,7 @@ export default function RcmPage() {
 
       if (activeTab === "current" || activeTab === "previous") {
         setLockedTabs(nextLockedTabs);
-        setMessage(`${activeTab === "current" ? "당기 RCM" : "전기 RCM"} 탭이 저장되어 서버에 반영되었습니다.`);
+        setMessage(`${activeTab === "current" ? "당기 RCM" : "전기 RCM"} 탭이 저장되었습니다.`);
       }
     } catch {
       setMessage("저장에 실패했습니다.");
