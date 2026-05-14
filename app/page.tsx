@@ -253,7 +253,7 @@ export default function RcmPage() {
   nextHistoryRows: HistoryRow[],
   nextCompletedYearData: Record<string, RowData[]>
 ) => {
-  const chunkSize = 50;
+  const chunkSize = 20;
 
   const payload = {
     rowsByTab: {
