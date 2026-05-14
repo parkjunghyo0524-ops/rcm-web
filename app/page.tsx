@@ -467,7 +467,7 @@ const message = messagesByTab[activeTab] ?? "";
       return next;
     });
 
-    setTabMessage(`${pastedRows.length}행의 데이터를 셀 기준으로 반영했습니다.`);
+    setTabMessage(activeTab, `${pastedRows.length}행의 데이터를 셀 기준으로 반영했습니다.`);
   };
 
   const buildHistoryRowsFromChange = (changeRow: RowData): HistoryRow[] => {
