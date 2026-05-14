@@ -724,9 +724,9 @@ export default function RcmPage() {
       setRowsByTab(nextRowsByTab);
       setHistoryRows(normalizedHistoryRows);
       setMessage(`${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
-    } catch {
-      setMessage(`적용사항 저장 실패: ${e.message}`);
-    }
+    } catch (e: any) {
+  setMessage(`적용사항 저장 실패: ${e.message}`);
+}
   };
 
   const handleFinalizeCurrentYear = async () => {
