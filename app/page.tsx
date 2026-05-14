@@ -302,6 +302,7 @@ export default function RcmPage() {
   yearValue: nextYearValue,
   lockedTabs: nextLockedTabs,
   historyRows: nextHistoryRows,
+  completedYearData: nextCompletedYearData,
 }),
   });
 
