@@ -76,12 +76,17 @@ export async function POST(req: Request) {
 
     const { error: saveError } = await supabase
   .from("rcm_data")
-  .upsert({
-    id: 1,
-    year: currentData.yearValue || "default",
-    data: currentData,
-    updated_at: new Date().toISOString(),
-  });
+  .upsert(
+    {
+      id: 1,
+      year: currentData.yearValue || body.yearValue || "default",
+      data: currentData,
+      updated_at: new Date().toISOString(),
+    },
+    {
+      onConflict: "id",
+    }
+  );
 
     if (saveError) {
       return NextResponse.json({ error: saveError.message }, { status: 500 });
