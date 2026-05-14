@@ -269,7 +269,7 @@ const message = messagesByTab[activeTab] ?? "";
   nextCompletedYearData: Record<string, RowData[]>,
   tabsToSave: Array<"current" | "previous" | "change"> = ["current", "previous", "change"]
 ) => {
-  const chunkSize = 100;
+  const chunkSize = 50;
 
   const payload = {
     rowsByTab: {
