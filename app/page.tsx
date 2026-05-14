@@ -725,7 +725,7 @@ export default function RcmPage() {
       setHistoryRows(normalizedHistoryRows);
       setMessage(`${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
     } catch {
-      setMessage("적용사항 저장에 실패했습니다.");
+      setMessage(`적용사항 저장 실패: ${e.message}`);
     }
   };
 
