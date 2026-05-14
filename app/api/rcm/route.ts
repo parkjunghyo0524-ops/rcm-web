@@ -71,7 +71,7 @@ export async function POST(req: Request) {
       currentData.yearValue = body.yearValue ?? "";
       currentData.lockedTabs = body.lockedTabs ?? {};
       currentData.historyRows = body.historyRows ?? [];
-      currentData.completedYearData = body.completedYearData ?? {};
+      currentData.completedYearData = body.completedYearData ?? currentData.completedYearData ?? {};
     }
 
     const { error: saveError } = await supabase
