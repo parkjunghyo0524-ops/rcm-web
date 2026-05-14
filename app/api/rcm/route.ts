@@ -78,6 +78,7 @@ export async function POST(req: Request) {
   .from("rcm_data")
   .upsert({
     id: 1,
+    year: currentData.yearValue || "default",
     data: currentData,
     updated_at: new Date().toISOString(),
   });
