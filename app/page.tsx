@@ -262,75 +262,69 @@ const message = messagesByTab[activeTab] ?? "";
   }, []);
 
   const saveToLocalStorage = async (
-  nextRowsByTab: Record<TabKey, RowData[]>,
-  nextYearValue: string,
-  nextLockedTabs: { current: boolean; previous: boolean },
-  nextHistoryRows: HistoryRow[],
-  nextCompletedYearData: Record<string, RowData[]>,
-  tabsToSave: Array<"current" | "previous" | "change"> = ["current", "previous", "change"]
-) => {
-  const chunkSize = 50;
-
-  const payload = {
-    rowsByTab: {
-      current: nextRowsByTab.current,
-      previous: nextRowsByTab.previous,
-      change: nextRowsByTab.change,
-    },
-    yearValue: nextYearValue,
-    lockedTabs: nextLockedTabs,
-    historyRows: nextHistoryRows,
-    completedYearData: nextCompletedYearData,
-  };
-
-  const entries = tabsToSave.map((tabName) => [
-  tabName,
-  payload.rowsByTab[tabName],
-]) as [string, RowData[]][];
-
-  for (const [tabName, rows] of entries) {
-    for (let i = 0; i < rows.length; i += chunkSize) {
+    nextRowsByTab: Record<TabKey, RowData[]>,
+    nextYearValue: string,
+    nextLockedTabs: { current: boolean; previous: boolean },
+    nextHistoryRows: HistoryRow[],
+    nextCompletedYearData: Record<string, RowData[]>,
+    tabsToSave: Array<"current" | "previous" | "change"> = [],
+    metaToSave: { historyRows?: boolean; completedYearData?: boolean } = {}
+  ) => {
+    const request = async (body: Record<string, any>) => {
       const res = await fetch("/api/rcm", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          mode: "chunk",
-          tabName,
-          startIndex: i,
-          rows: rows.slice(i, i + chunkSize),
-          yearValue: nextYearValue,
-          lockedTabs: nextLockedTabs,
-        }),
+        body: JSON.stringify(body),
       });
 
       if (!res.ok) {
-  const errorText = await res.text();
-  throw new Error(errorText);
-}
+        const errorText = await res.text();
+        throw new Error(errorText);
+      }
+
+      return res.json();
+    };
+
+    const uniqueTabsToSave = Array.from(new Set(tabsToSave));
+
+    if (uniqueTabsToSave.length === 1) {
+      const tabName = uniqueTabsToSave[0];
+
+      await request({
+        mode: "tab",
+        tabName,
+        rows: nextRowsByTab[tabName],
+        yearValue: nextYearValue,
+        lockedTabs: nextLockedTabs,
+      });
     }
-  }
 
-  const metaRes = await fetch("/api/rcm", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-  mode: "meta",
-  yearValue: nextYearValue,
-  lockedTabs: nextLockedTabs,
-  historyRows: nextHistoryRows,
-  completedYearData: nextCompletedYearData,
-}),
-  });
+    if (uniqueTabsToSave.length > 1) {
+      const tabs = uniqueTabsToSave.reduce<Record<string, RowData[]>>((acc, tabName) => {
+        acc[tabName] = nextRowsByTab[tabName];
+        return acc;
+      }, {});
 
-  if (!metaRes.ok) {
-  const errorText = await metaRes.text();
-  throw new Error(errorText);
-}
-};
+      await request({
+        mode: "tabs",
+        tabs,
+        yearValue: nextYearValue,
+        lockedTabs: nextLockedTabs,
+      });
+    }
+
+    if (uniqueTabsToSave.length === 0 || metaToSave.historyRows || metaToSave.completedYearData) {
+      await request({
+        mode: "meta",
+        yearValue: nextYearValue,
+        lockedTabs: nextLockedTabs,
+        ...(metaToSave.historyRows ? { historyRows: nextHistoryRows } : {}),
+        ...(metaToSave.completedYearData ? { completedYearData: nextCompletedYearData } : {}),
+      });
+    }
+  };
 
   const updateActiveRows = (updater: (prev: RowData[]) => RowData[]) => {
     if (activeTab === "history" || activeTab === "yearly") return;
@@ -741,13 +735,14 @@ const message = messagesByTab[activeTab] ?? "";
 
     try {
       await saveToLocalStorage(
-  nextRowsByTab,
-  yearValue,
-  lockedTabs,
-  normalizedHistoryRows,
-  completedYearData,
-  ["current", "change"]
-);
+        nextRowsByTab,
+        yearValue,
+        lockedTabs,
+        normalizedHistoryRows,
+        completedYearData,
+        ["current", "change"],
+        { historyRows: true }
+      );
       setRowsByTab(nextRowsByTab);
       setHistoryRows(normalizedHistoryRows);
       setTabMessage("change", `${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
@@ -784,7 +779,15 @@ const message = messagesByTab[activeTab] ?? "";
     };
 
     try {
-      await saveToLocalStorage(rowsByTab, yearValue, nextLockedTabs, historyRows, nextCompletedYearData, ["current"]);
+      await saveToLocalStorage(
+        rowsByTab,
+        yearValue,
+        nextLockedTabs,
+        historyRows,
+        nextCompletedYearData,
+        ["current"],
+        { completedYearData: true }
+      );
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(year);
       setLockedTabs(nextLockedTabs);
@@ -811,7 +814,15 @@ const message = messagesByTab[activeTab] ?? "";
     const nextSelectedYear = remainingYears[0] ?? "";
 
     try {
-      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, historyRows, nextCompletedYearData, []);
+      await saveToLocalStorage(
+        rowsByTab,
+        yearValue,
+        lockedTabs,
+        historyRows,
+        nextCompletedYearData,
+        [],
+        { completedYearData: true }
+      );
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(nextSelectedYear);
       setTabMessage("yearly", `${selectedYear}년 RCM이 년도별 RCM에서 삭제되었습니다.`);
@@ -906,7 +917,15 @@ const message = messagesByTab[activeTab] ?? "";
 
     if (activeTab === "history") {
       try {
-        await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, [], completedYearData, []);
+        await saveToLocalStorage(
+          rowsByTab,
+          yearValue,
+          lockedTabs,
+          [],
+          completedYearData,
+          [],
+          { historyRows: true }
+        );
         setHistoryRows([]);
         setTabMessage("history", "변경이력 탭을 초기화했습니다.");
       } catch {
@@ -937,7 +956,15 @@ const message = messagesByTab[activeTab] ?? "";
       }));
 
     try {
-      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, nextHistoryRows, completedYearData, []);
+      await saveToLocalStorage(
+        rowsByTab,
+        yearValue,
+        lockedTabs,
+        nextHistoryRows,
+        completedYearData,
+        [],
+        { historyRows: true }
+      );
       setHistoryRows(nextHistoryRows);
       setTabMessage("history", `${checkedRows.length}건의 변경이력을 삭제했습니다.`);
     } catch {
