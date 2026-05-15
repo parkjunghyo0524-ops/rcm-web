@@ -43,24 +43,60 @@ export async function POST(req: Request) {
       completedYearData: {},
     };
 
+    currentData.rowsByTab = currentData.rowsByTab ?? {
+      current: [],
+      previous: [],
+      change: [],
+    };
+
+    if (body.mode === "tab") {
+      const tabName = body.tabName;
+      const rows = body.rows ?? [];
+
+      if (!tabName) {
+        return NextResponse.json(
+          { error: "tabName is required" },
+          { status: 400 }
+        );
+      }
+
+      currentData.rowsByTab = {
+        ...currentData.rowsByTab,
+        [tabName]: rows,
+      };
+
+      currentData.yearValue = body.yearValue ?? currentData.yearValue ?? "";
+      currentData.lockedTabs = body.lockedTabs ?? currentData.lockedTabs ?? {};
+    }
+
+    if (body.mode === "tabs") {
+      const tabs = body.tabs ?? {};
+
+      currentData.rowsByTab = {
+        ...currentData.rowsByTab,
+        ...tabs,
+      };
+
+      currentData.yearValue = body.yearValue ?? currentData.yearValue ?? "";
+      currentData.lockedTabs = body.lockedTabs ?? currentData.lockedTabs ?? {};
+    }
+
     if (body.mode === "chunk") {
       const tabName = body.tabName;
       const startIndex = body.startIndex ?? 0;
       const rows = body.rows ?? [];
 
       const nextRowsByTab = {
-        current: currentData.rowsByTab?.current ?? [],
-        previous: currentData.rowsByTab?.previous ?? [],
-        change: currentData.rowsByTab?.change ?? [],
+        ...currentData.rowsByTab,
       };
 
-      const targetRows = [...(nextRowsByTab[tabName as "current" | "previous" | "change"] ?? [])];
+      const targetRows = [...(nextRowsByTab[tabName] ?? [])];
 
       rows.forEach((row: any, idx: number) => {
         targetRows[startIndex + idx] = row;
       });
 
-      nextRowsByTab[tabName as "current" | "previous" | "change"] = targetRows;
+      nextRowsByTab[tabName] = targetRows;
 
       currentData.rowsByTab = nextRowsByTab;
       currentData.yearValue = body.yearValue ?? currentData.yearValue ?? "";
@@ -68,18 +104,19 @@ export async function POST(req: Request) {
     }
 
     if (body.mode === "meta") {
-      currentData.yearValue = body.yearValue ?? "";
-      currentData.lockedTabs = body.lockedTabs ?? {};
-      currentData.historyRows = body.historyRows ?? [];
-      currentData.completedYearData = body.completedYearData ?? currentData.completedYearData ?? {};
+      currentData.yearValue = body.yearValue ?? currentData.yearValue ?? "";
+      currentData.lockedTabs = body.lockedTabs ?? currentData.lockedTabs ?? {};
+      currentData.historyRows = body.historyRows ?? currentData.historyRows ?? [];
+      currentData.completedYearData =
+        body.completedYearData ?? currentData.completedYearData ?? {};
     }
 
     const { error: saveError } = await supabase
-  .from("rcm_data")
-  .update({
-    data: currentData,
-  })
-  .eq("id", 1);
+      .from("rcm_data")
+      .update({
+        data: currentData,
+      })
+      .eq("id", 1);
 
     if (saveError) {
       return NextResponse.json({ error: saveError.message }, { status: 500 });
