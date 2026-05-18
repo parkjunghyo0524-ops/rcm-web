@@ -57,12 +57,12 @@ export default function RcmPage() {
     { key: "문서 최종승인권자", label: "문서 최종승인권자", group: "Control", width: 150 },
     { key: "Control Owner", label: "Control Owner", group: "Control", width: 180 },
 
-    { key: "Factor 1", label: "Factor 1", group: "Key Control 결정", width: 100 },
-    { key: "Factor 2", label: "Factor 2", group: "Key Control 결정", width: 100 },
-    { key: "Factor 3", label: "Factor 3", group: "Key Control 결정", width: 120 },
-    { key: "Factor 3.1", label: "Factor 3.1", group: "Key Control 결정", width: 120 },
-    { key: "Factor 4", label: "Factor 4", group: "Key Control 결정", width: 100 },
-    { key: "Factor 5", label: "Factor 5", group: "Key Control 결정", width: 100 },
+    { key: "Factor 1", label: "(Factor 1)\n재무제표 왜곡표시\n위험 방지 효과", group: "Key Control 결정", width: 170 },
+    { key: "Factor 2", label: "(Factor 2)\n관련 계정과목,\n거래유형, 공시\n사항의 중요성", group: "Key Control 결정", width: 170 },
+    { key: "Factor 3", label: "(Factor 3)\n보완적 및 중\n복적 설계 여부", group: "Key Control 결정", width: 170 },
+    { key: "Factor 3.1", label: "(Factor 3.1)\n보완통제 또는\n중복통제\nControl Code", group: "Key Control 결정", width: 180 },
+    { key: "Factor 4", label: "(Factor 4)\n단계적으로 설\n계된 통제활동\n의 경우 정교함\n수준", group: "Key Control 결정", width: 180 },
+    { key: "Factor 5", label: "(Factor 5)\n통제실패\n위험 수준", group: "Key Control 결정", width: 150 },
     { key: "핵심통제 여부", label: "핵심통제 여부", group: "Key Control 결정", width: 110 },
 
     { key: "COA Code", label: "COA Code", group: "COA / 계정과목", width: 100 },
