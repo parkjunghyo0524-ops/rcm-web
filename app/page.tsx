@@ -135,6 +135,25 @@ export default function RcmPage() {
     return commonColumns;
   };
 
+  const normalizeKeyValue = (value: unknown) => String(value ?? "").trim();
+
+  const getApplyKey = (row: RowData) => ({
+    controlNo: normalizeKeyValue(row["Control No."]),
+    majorProcessCode: normalizeKeyValue(row["Major Process Code"]),
+    subProcessCode: normalizeKeyValue(row["Sub Process Code"]),
+  });
+
+  const isSameApplyTarget = (a: RowData, b: RowData) => {
+    const aKey = getApplyKey(a);
+    const bKey = getApplyKey(b);
+
+    return (
+      aKey.controlNo === bKey.controlNo &&
+      aKey.majorProcessCode === bKey.majorProcessCode &&
+      aKey.subProcessCode === bKey.subProcessCode
+    );
+  };
+
   const buildEmptyRow = (tab: TabKey): RowData => {
     const row: RowData = {};
     getColumnsByTab(tab).forEach((col) => {
@@ -469,9 +488,7 @@ const message = messagesByTab[activeTab] ?? "";
     if (!controlNo) return [];
 
     const previousRow =
-      (rowsByTab.previous ?? []).find(
-        (row) => String(row["Control No."] ?? "").trim() === controlNo
-      ) ?? null;
+      (rowsByTab.previous ?? []).find((row) => isSameApplyTarget(row, changeRow)) ?? null;
 
     const megaProcessName = String(
       changeRow["Mega Process Name"] ?? previousRow?.["Mega Process Name"] ?? ""
@@ -639,12 +656,15 @@ const message = messagesByTab[activeTab] ?? "";
 
     const hasMissingRequired = checkedRows.some(
       (row) =>
+        !String(row["Control No."] ?? "").trim() ||
+        !String(row["Major Process Code"] ?? "").trim() ||
+        !String(row["Sub Process Code"] ?? "").trim() ||
         !String(row["수정일자"] ?? "").trim() ||
         !String(row["수정사유"] ?? "").trim()
     );
 
     if (hasMissingRequired) {
-      window.alert("수정일자와 수정사유는 필수값이오니 입력바랍니다.");
+      window.alert("Control No., Major Process Code, Sub Process Code, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
       return;
     }
 
@@ -661,9 +681,7 @@ const message = messagesByTab[activeTab] ?? "";
       nextHistoryRows = [...nextHistoryRows, ...historyForRow];
 
       if (action === "삭제") {
-        nextCurrent = nextCurrent.filter(
-          (currentRow) => String(currentRow["Control No."] ?? "").trim() !== controlNo
-        );
+        nextCurrent = nextCurrent.filter((currentRow) => !isSameApplyTarget(currentRow, row));
         return;
       }
 
@@ -673,15 +691,13 @@ const message = messagesByTab[activeTab] ?? "";
           newRow[col.key] = row[col.key] ?? "";
         });
 
-        nextCurrent = nextCurrent.filter(
-          (currentRow) => String(currentRow["Control No."] ?? "").trim() !== controlNo
-        );
+        nextCurrent = nextCurrent.filter((currentRow) => !isSameApplyTarget(currentRow, row));
         nextCurrent.push(newRow);
         return;
       }
 
       nextCurrent = nextCurrent.map((currentRow) => {
-        if (String(currentRow["Control No."] ?? "").trim() !== controlNo) {
+        if (!isSameApplyTarget(currentRow, row)) {
           return currentRow;
         }
 
@@ -970,6 +986,24 @@ const message = messagesByTab[activeTab] ?? "";
     } catch {
       setTabMessage("history", "변경이력 삭제 저장에 실패했습니다.");
     }
+  };
+  const handleClearHistoryChecks = () => {
+    if (activeTab !== "history") return;
+
+    const hasCheckedRows = historyRows.some((row) => row.checked === "Y");
+
+    if (!hasCheckedRows) {
+      setTabMessage("history", "해제할 체크 항목이 없습니다.");
+      return;
+    }
+
+    setHistoryRows((prev) =>
+      prev.map((row) => ({
+        ...row,
+        checked: "",
+      }))
+    );
+    setTabMessage("history", "변경이력 삭제 체크박스를 전체 해제했습니다.");
   };
   const handleAddChangeRow = () => {
     setRowsByTab((prev) => ({
@@ -1296,10 +1330,15 @@ if (activeTab === "history" || activeTab === "yearly") {
           </button>
         )}
         {activeTab === "history" && (
-  <button onClick={handleDeleteHistoryRows} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
-    삭제
-  </button>
-)}
+          <>
+            <button onClick={handleDeleteHistoryRows} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+              삭제
+            </button>
+            <button onClick={handleClearHistoryChecks} style={{ background: "#e2e8f0", color: "#0f172a", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+              전체 해제
+            </button>
+          </>
+        )}
         {activeTab === "current" && (
           <button onClick={handleFinalizeCurrentYear} style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
             최종완료
