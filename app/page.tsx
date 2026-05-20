@@ -18,6 +18,7 @@ type TabKey = "current" | "previous" | "change" | "history" | "yearly";
 type HistoryRow = {
   checked?: string;
   no: number;
+  담당자?: string;
   수정일: string;
   "Mega Process": string;
   "Control No": string;
@@ -112,6 +113,7 @@ export default function RcmPage() {
     { key: "적용여부", label: "적용여부", group: "수정사항", width: 100, type: "text" },
     { key: "적용", label: "적용", group: "수정사항", width: 80, type: "checkbox" },
     { key: "신설/삭제", label: "신설/삭제", group: "수정사항", width: 100, type: "select", options: ["", "신설", "삭제"] },
+    { key: "담당자", label: "담당자", group: "수정사항", width: 120, type: "text" },
     { key: "수정일자", label: "수정일자", group: "수정사항", width: 120, type: "date" },
     { key: "수정사유", label: "수정사유", group: "수정사항", width: 300, type: "text" },
   ];
@@ -119,6 +121,7 @@ export default function RcmPage() {
   const historyColumns: Column[] = [
     { key: "checked", label: "삭제", group: "변경이력", width: 50, type: "checkbox" },
     { key: "no", label: "No.", group: "변경이력", width: 60 },
+    { key: "담당자", label: "담당자", group: "변경이력", width: 120 },
     { key: "수정일", label: "수정일", group: "변경이력", width: 120 },
     { key: "Mega Process", label: "Mega Process", group: "변경이력", width: 160 },
     { key: "Control No", label: "Control No", group: "변경이력", width: 130 },
@@ -209,6 +212,7 @@ const message = messagesByTab[activeTab] ?? "";
       ? historyRows.map((row) => ({
           checked: row.checked ?? "",
           no: String(row.no),
+          담당자: row["담당자"] ?? "",
           수정일: row["수정일"],
           "Mega Process": row["Mega Process"],
           "Control No": row["Control No"],
@@ -498,6 +502,7 @@ const message = messagesByTab[activeTab] ?? "";
       changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? ""
     ).trim();
 
+    const manager = String(changeRow["담당자"] ?? "").trim();
     const reason = String(changeRow["수정사유"] ?? "").trim();
     const modifyDate = String(changeRow["수정일자"] ?? "").trim();
     const action = String(changeRow["신설/삭제"] ?? "").trim();
@@ -507,6 +512,7 @@ const message = messagesByTab[activeTab] ?? "";
     if (action === "신설" || action === "삭제") {
       historyItems.push({
         no: 0,
+        담당자: manager,
         수정일: modifyDate,
         "Mega Process": megaProcessName,
         "Control No": controlNo,
@@ -526,6 +532,7 @@ const message = messagesByTab[activeTab] ?? "";
       if (asIs !== toBe) {
         historyItems.push({
           no: 0,
+          담당자: manager,
           수정일: modifyDate,
           "Mega Process": megaProcessName,
           "Control No": controlNo,
@@ -715,6 +722,7 @@ const message = messagesByTab[activeTab] ?? "";
         changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? ""
       ).trim();
 
+      const manager = String(changeRow["담당자"] ?? "").trim();
       const reason = String(changeRow["수정사유"] ?? "").trim();
       const modifyDate = String(changeRow["수정일자"] ?? "").trim();
       const action = String(changeRow["신설/삭제"] ?? "").trim();
@@ -724,6 +732,7 @@ const message = messagesByTab[activeTab] ?? "";
       if (action === "신설" || action === "삭제") {
         historyItems.push({
           no: 0,
+          담당자: manager,
           수정일: modifyDate,
           "Mega Process": megaProcessName,
           "Control No": controlNo,
@@ -743,6 +752,7 @@ const message = messagesByTab[activeTab] ?? "";
         if (asIs !== toBe) {
           historyItems.push({
             no: 0,
+            담당자: manager,
             수정일: modifyDate,
             "Mega Process": megaProcessName,
             "Control No": controlNo,
@@ -814,6 +824,7 @@ const message = messagesByTab[activeTab] ?? "";
       })
       .map((row, idx) => ({
         ...row,
+        담당자: row["담당자"] ?? "",
         no: idx + 1,
       }));
 
@@ -1173,6 +1184,7 @@ await fetch("/api/rcm", {
       activeTab === "history"
         ? historyRows.map((row) => ({
             no: String(row.no),
+            담당자: row["담당자"] ?? "",
             수정일: row["수정일"],
             "Mega Process": row["Mega Process"],
             "Control No": row["Control No"],
