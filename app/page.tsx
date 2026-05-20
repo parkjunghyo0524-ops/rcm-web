@@ -174,7 +174,6 @@ export default function RcmPage() {
     yearly: [],
   });
   const [historyRows, setHistoryRows] = useState<HistoryRow[]>([]);
-  const [historyPasteText, setHistoryPasteText] = useState("");
   const [search, setSearch] = useState("");
   const [filters, setFilters] = useState<FilterState>({});
   const [openFilter, setOpenFilter] = useState<string | null>(null);
@@ -1147,116 +1146,6 @@ await fetch("/api/rcm", {
   };
 
 
-  const parseHistoryPasteText = (text: string): HistoryRow[] => {
-    const lines = text
-      .replace(/\r/g, "")
-      .split("\n")
-      .filter((line) => line.trim() !== "");
-
-    if (lines.length === 0) return [];
-
-    const rows = lines.map((line) => line.split("\t"));
-    const firstRow = rows[0].map((cell) => cell.trim());
-
-    const expectedHeaders = [
-      "수정일",
-      "Mega Process",
-      "Control No",
-      "Control Name",
-      "변경 항목",
-      "AS-IS",
-      "TO-BE",
-      "수정사유",
-    ];
-
-    const hasHeader = expectedHeaders.some((header) => firstRow.includes(header));
-    const dataRows = hasHeader ? rows.slice(1) : rows;
-
-    const getByHeader = (row: string[], header: string, fallbackIndex: number) => {
-      if (hasHeader) {
-        const headerIndex = firstRow.indexOf(header);
-        if (headerIndex >= 0) return row[headerIndex] ?? "";
-      }
-      return row[fallbackIndex] ?? "";
-    };
-
-    return dataRows
-      .map((row, idx) => {
-        const 수정일 = getByHeader(row, "수정일", 1);
-        const megaProcess = getByHeader(row, "Mega Process", 2);
-        const controlNo = getByHeader(row, "Control No", 3);
-        const controlName = getByHeader(row, "Control Name", 4);
-        const changeItem = getByHeader(row, "변경 항목", 5);
-        const asIs = getByHeader(row, "AS-IS", 6);
-        const toBe = getByHeader(row, "TO-BE", 7);
-        const reason = getByHeader(row, "수정사유", 8);
-
-        return {
-          checked: "",
-          no: idx + 1,
-          수정일: String(수정일 ?? "").trim(),
-          "Mega Process": String(megaProcess ?? "").trim(),
-          "Control No": String(controlNo ?? "").trim(),
-          "Control Name": String(controlName ?? "").trim(),
-          "변경 항목": String(changeItem ?? "").trim(),
-          "AS-IS": String(asIs ?? "").trim(),
-          "TO-BE": String(toBe ?? "").trim(),
-          수정사유: String(reason ?? "").trim(),
-        };
-      })
-      .filter((row) => {
-        return (
-          row["수정일"] ||
-          row["Control No"] ||
-          row["Control Name"] ||
-          row["변경 항목"] ||
-          row["AS-IS"] ||
-          row["TO-BE"] ||
-          row["수정사유"]
-        );
-      })
-      .map((row, idx) => ({
-        ...row,
-        no: idx + 1,
-      }));
-  };
-
-  const handleSavePastedHistory = async () => {
-    const pastedHistoryRows = parseHistoryPasteText(historyPasteText);
-
-    if (pastedHistoryRows.length === 0) {
-      setTabMessage("history", "붙여넣은 변경이력 데이터가 없습니다.");
-      return;
-    }
-
-    const confirmed = window.confirm(
-      `${pastedHistoryRows.length}건의 변경이력을 저장하시겠습니까? 기존 변경이력은 붙여넣은 내용으로 대체됩니다.`
-    );
-
-    if (!confirmed) {
-      setTabMessage("history", "변경이력 붙여넣기 저장이 취소되었습니다.");
-      return;
-    }
-
-    try {
-      await saveToLocalStorage(
-        rowsByTab,
-        yearValue,
-        lockedTabs,
-        pastedHistoryRows,
-        completedYearData,
-        [],
-        { historyRows: true }
-      );
-
-      setHistoryRows(pastedHistoryRows);
-      setHistoryPasteText("");
-      setTabMessage("history", `${pastedHistoryRows.length}건의 변경이력을 저장했습니다.`);
-    } catch (e: any) {
-      setTabMessage("history", `붙여넣기 저장 실패: ${e.message}`);
-    }
-  };
-
   const tabButtonStyle = (tab: TabKey): React.CSSProperties => ({
     background: activeTab === tab ? "#334155" : "#e2e8f0",
     color: activeTab === tab ? "white" : "#0f172a",
@@ -1467,9 +1356,6 @@ if (activeTab === "history" || activeTab === "yearly") {
             <button onClick={handleClearHistoryChecks} style={{ background: "#e2e8f0", color: "#0f172a", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
               전체 해제
             </button>
-            <button onClick={handleSavePastedHistory} style={{ background: "#2563eb", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
-              붙여넣기 저장
-            </button>
           </>
         )}
         {activeTab === "current" && (
@@ -1531,34 +1417,6 @@ if (activeTab === "history" || activeTab === "yearly") {
           </span>
         )}
       </div>
-
-      {activeTab === "history" && (
-        <div style={{ marginBottom: "12px", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "10px", background: "#f8fafc" }}>
-          <div style={{ fontSize: "13px", color: "#334155", fontWeight: 600, marginBottom: "6px" }}>
-            변경이력 붙여넣기
-          </div>
-          <textarea
-            value={historyPasteText}
-            onChange={(e) => setHistoryPasteText(e.target.value)}
-            placeholder={"엑셀에서 변경이력 범위를 복사한 뒤 여기에 붙여넣고, 위의 '붙여넣기 저장' 버튼을 눌러주세요."}
-            style={{
-              width: "100%",
-              height: "90px",
-              border: "1px solid #b8c4d6",
-              borderRadius: "6px",
-              padding: "10px",
-              fontSize: "12px",
-              fontFamily: "Arial, sans-serif",
-              resize: "vertical",
-              boxSizing: "border-box",
-              background: "white",
-            }}
-          />
-          <div style={{ marginTop: "6px", fontSize: "12px", color: "#64748b" }}>
-            컬럼 순서: No. / 수정일 / Mega Process / Control No / Control Name / 변경 항목 / AS-IS / TO-BE / 수정사유
-          </div>
-        </div>
-      )}
 
 <div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflow: "auto", flex: 1, backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 1px" }}>
   <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
