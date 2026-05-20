@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 
 type Column = {
   key: string;
@@ -841,15 +842,22 @@ await fetch("/api/rcm", {
     const nextSelectedYear = remainingYears[0] ?? "";
 
     try {
-      await saveToLocalStorage(
-        rowsByTab,
-        yearValue,
-        lockedTabs,
-        historyRows,
-        nextCompletedYearData,
-        [],
-        { completedYearData: true }
-      );
+      const res = await fetch("/api/rcm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode: "deleteYearly",
+          year: selectedYear,
+        }),
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText);
+      }
+
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(nextSelectedYear);
       setTabMessage("yearly", `${selectedYear}년 RCM이 년도별 RCM에서 삭제되었습니다.`);
@@ -1138,6 +1146,92 @@ await fetch("/api/rcm", {
     setTabMessage(activeTab, `${tabNameMap[activeTab]} 탭을 엑셀로 다운로드했습니다.`);
   };
 
+
+  const handleUploadHistoryExcel = async (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      const data = await file.arrayBuffer();
+
+      const workbook = XLSX.read(data, {
+        type: "array",
+      });
+
+      const sheetName = workbook.SheetNames[0];
+      const worksheet = workbook.Sheets[sheetName];
+
+      const jsonData: any[] = XLSX.utils.sheet_to_json(worksheet, {
+        defval: "",
+      });
+
+      const uploadedHistoryRows: HistoryRow[] = jsonData
+        .filter((row) => {
+          return (
+            String(row["수정일"] ?? "").trim() ||
+            String(row["Control No"] ?? "").trim() ||
+            String(row["Control Name"] ?? "").trim() ||
+            String(row["변경 항목"] ?? "").trim() ||
+            String(row["AS-IS"] ?? "").trim() ||
+            String(row["TO-BE"] ?? "").trim() ||
+            String(row["수정사유"] ?? "").trim()
+          );
+        })
+        .map((row, idx) => ({
+          checked: "",
+          no: idx + 1,
+          수정일: String(row["수정일"] ?? ""),
+          "Mega Process": String(row["Mega Process"] ?? ""),
+          "Control No": String(row["Control No"] ?? ""),
+          "Control Name": String(row["Control Name"] ?? ""),
+          "변경 항목": String(row["변경 항목"] ?? ""),
+          "AS-IS": String(row["AS-IS"] ?? ""),
+          "TO-BE": String(row["TO-BE"] ?? ""),
+          수정사유: String(row["수정사유"] ?? ""),
+        }));
+
+      if (uploadedHistoryRows.length === 0) {
+        setTabMessage("history", "업로드할 변경이력이 없습니다.");
+        event.target.value = "";
+        return;
+      }
+
+      const confirmed = window.confirm(
+        `${uploadedHistoryRows.length}건의 변경이력을 업로드하시겠습니까? 기존 변경이력은 업로드 파일 내용으로 대체됩니다.`
+      );
+
+      if (!confirmed) {
+        setTabMessage("history", "변경이력 업로드가 취소되었습니다.");
+        event.target.value = "";
+        return;
+      }
+
+      await saveToLocalStorage(
+        rowsByTab,
+        yearValue,
+        lockedTabs,
+        uploadedHistoryRows,
+        completedYearData,
+        [],
+        { historyRows: true }
+      );
+
+      setHistoryRows(uploadedHistoryRows);
+
+      setTabMessage(
+        "history",
+        `${uploadedHistoryRows.length}건의 변경이력을 업로드했습니다.`
+      );
+    } catch (e: any) {
+      setTabMessage("history", `업로드 실패: ${e.message}`);
+    }
+
+    event.target.value = "";
+  };
+
   const tabButtonStyle = (tab: TabKey): React.CSSProperties => ({
     background: activeTab === tab ? "#334155" : "#e2e8f0",
     color: activeTab === tab ? "white" : "#0f172a",
@@ -1348,6 +1442,10 @@ if (activeTab === "history" || activeTab === "yearly") {
             <button onClick={handleClearHistoryChecks} style={{ background: "#e2e8f0", color: "#0f172a", border: "1px solid #cbd5e1", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
               전체 해제
             </button>
+            <label style={{ background: "#2563eb", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer", display: "inline-flex", alignItems: "center" }}>
+              엑셀 업로드
+              <input type="file" accept=".xls,.xlsx" onChange={handleUploadHistoryExcel} style={{ display: "none" }} />
+            </label>
           </>
         )}
         {activeTab === "current" && (
