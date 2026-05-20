@@ -796,14 +796,25 @@ const message = messagesByTab[activeTab] ?? "";
 
     try {
       await saveToLocalStorage(
-        rowsByTab,
-        yearValue,
-        nextLockedTabs,
-        historyRows,
-        nextCompletedYearData,
-        ["current"],
-        { completedYearData: true }
-      );
+  rowsByTab,
+  yearValue,
+  nextLockedTabs,
+  historyRows,
+  {},
+  ["current"]
+);
+
+await fetch("/api/rcm", {
+  method: "POST",
+  headers: {
+    "Content-Type": "application/json",
+  },
+  body: JSON.stringify({
+    mode: "yearly",
+    year,
+    rows: finalizedRows,
+  }),
+});
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(year);
       setLockedTabs(nextLockedTabs);
