@@ -668,8 +668,95 @@ const message = messagesByTab[activeTab] ?? "";
       return;
     }
 
-    let nextCurrent = [...(rowsByTab.current ?? [])];
-    let nextHistoryRows = [...historyRows];
+    let latestRowsByTab: Record<TabKey, RowData[]> = rowsByTab;
+    let latestHistoryRows: HistoryRow[] = historyRows;
+
+    try {
+      const latestRes = await fetch("/api/rcm", { cache: "no-store" });
+
+      if (!latestRes.ok) {
+        const errorText = await latestRes.text();
+        throw new Error(errorText);
+      }
+
+      const latestData = await latestRes.json();
+
+      latestRowsByTab = {
+        ...rowsByTab,
+        ...(latestData?.rowsByTab ?? {}),
+        history: [],
+        yearly: [],
+      };
+
+      latestHistoryRows = Array.isArray(latestData?.historyRows)
+        ? latestData.historyRows
+        : historyRows;
+    } catch (e: any) {
+      setTabMessage("change", `최신 데이터 조회 실패: ${e.message}`);
+      return;
+    }
+
+    const latestPreviousRows = latestRowsByTab.previous ?? [];
+    let nextCurrent = [...(latestRowsByTab.current ?? [])];
+    let nextHistoryRows = [...latestHistoryRows];
+
+    const buildHistoryRowsFromChangeWithLatest = (changeRow: RowData): HistoryRow[] => {
+      const controlNo = String(changeRow["Control No."] ?? "").trim();
+      if (!controlNo) return [];
+
+      const previousRow =
+        latestPreviousRows.find((row) => isSameApplyTarget(row, changeRow)) ?? null;
+
+      const megaProcessName = String(
+        changeRow["Mega Process Name"] ?? previousRow?.["Mega Process Name"] ?? ""
+      ).trim();
+
+      const controlName = String(
+        changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? ""
+      ).trim();
+
+      const reason = String(changeRow["수정사유"] ?? "").trim();
+      const modifyDate = String(changeRow["수정일자"] ?? "").trim();
+      const action = String(changeRow["신설/삭제"] ?? "").trim();
+
+      const historyItems: HistoryRow[] = [];
+
+      if (action === "신설" || action === "삭제") {
+        historyItems.push({
+          no: 0,
+          수정일: modifyDate,
+          "Mega Process": megaProcessName,
+          "Control No": controlNo,
+          "Control Name": controlName,
+          "변경 항목": action,
+          "AS-IS": action,
+          "TO-BE": action,
+          수정사유: reason,
+        });
+        return historyItems;
+      }
+
+      commonColumns.forEach((col) => {
+        const asIs = String(previousRow?.[col.key] ?? "");
+        const toBe = String(changeRow[col.key] ?? "");
+
+        if (asIs !== toBe) {
+          historyItems.push({
+            no: 0,
+            수정일: modifyDate,
+            "Mega Process": megaProcessName,
+            "Control No": controlNo,
+            "Control Name": controlName,
+            "변경 항목": col.key,
+            "AS-IS": asIs,
+            "TO-BE": toBe,
+            수정사유: reason,
+          });
+        }
+      });
+
+      return historyItems;
+    };
 
     checkedRows.forEach((row) => {
       const controlNo = String(row["Control No."] ?? "").trim();
@@ -677,7 +764,7 @@ const message = messagesByTab[activeTab] ?? "";
 
       if (!controlNo) return;
 
-      const historyForRow = buildHistoryRowsFromChange(row);
+      const historyForRow = buildHistoryRowsFromChangeWithLatest(row);
       nextHistoryRows = [...nextHistoryRows, ...historyForRow];
 
       if (action === "삭제") {
@@ -730,15 +817,56 @@ const message = messagesByTab[activeTab] ?? "";
         no: idx + 1,
       }));
 
-    const nextChange = (rowsByTab.change ?? []).map((row) => {
-      if (row["적용"] === "Y") {
+    const isAppliedTarget = (candidate: RowData) =>
+      checkedRows.some(
+        (checkedRow) =>
+          isSameApplyTarget(candidate, checkedRow) &&
+          String(candidate["수정일자"] ?? "").trim() === String(checkedRow["수정일자"] ?? "").trim() &&
+          String(candidate["수정사유"] ?? "").trim() === String(checkedRow["수정사유"] ?? "").trim()
+      );
+
+    const nextChangeBase = latestRowsByTab.change ?? rowsByTab.change ?? [];
+    const reflectedKeys = new Set<string>();
+
+    const makeChangeKey = (row: RowData) =>
+      [
+        String(row["Control No."] ?? "").trim(),
+        String(row["Major Process Code"] ?? "").trim(),
+        String(row["Sub Process Code"] ?? "").trim(),
+        String(row["수정일자"] ?? "").trim(),
+        String(row["수정사유"] ?? "").trim(),
+      ].join("||");
+
+    const nextChange = nextChangeBase.map((row) => {
+      const matchedCheckedRow = checkedRows.find(
+        (checkedRow) =>
+          isSameApplyTarget(row, checkedRow) &&
+          String(row["수정일자"] ?? "").trim() === String(checkedRow["수정일자"] ?? "").trim() &&
+          String(row["수정사유"] ?? "").trim() === String(checkedRow["수정사유"] ?? "").trim()
+      );
+
+      if (matchedCheckedRow) {
+        reflectedKeys.add(makeChangeKey(matchedCheckedRow));
         return {
           ...row,
+          ...matchedCheckedRow,
           적용: "",
           적용여부: "적용완료",
         };
       }
+
       return row;
+    });
+
+    checkedRows.forEach((checkedRow) => {
+      const key = makeChangeKey(checkedRow);
+      if (!reflectedKeys.has(key)) {
+        nextChange.push({
+          ...checkedRow,
+          적용: "",
+          적용여부: "적용완료",
+        });
+      }
     });
 
     const nextRowsByTab: Record<TabKey, RowData[]> = {
