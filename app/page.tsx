@@ -627,10 +627,6 @@ const message = messagesByTab[activeTab] ?? "";
     const keyword = changeSearch.trim().toLowerCase();
 
     if (!keyword) {
-      setRowsByTab((prev) => ({
-        ...prev,
-        change: [],
-      }));
       setTabMessage("change", "Control No.를 입력해주세요.");
       return;
     }
@@ -644,14 +640,36 @@ const message = messagesByTab[activeTab] ?? "";
     const mappedResults = results.map((row) => ({
       ...buildEmptyRow("change"),
       ...row,
+      적용: "",
+      적용여부: "",
+      저장여부: "",
     }));
 
-    setRowsByTab((prev) => ({
-      ...prev,
-      change: mappedResults,
-    }));
+    const makeSearchMergeKey = (row: RowData) =>
+      [
+        String(row["Control No."] ?? "").trim().toLowerCase(),
+        String(row["Major Process Code"] ?? "").trim().toLowerCase(),
+        String(row["Sub Process Code"] ?? "").trim().toLowerCase(),
+      ].join("||");
 
-    setTabMessage("change", `${results.length}건의 Control No. 데이터를 조회했습니다.`);
+    setRowsByTab((prev) => {
+      const currentChangeRows = prev.change ?? [];
+      const completedOrSavedRows = currentChangeRows.filter(
+        (row) => row["저장여부"] === "저장완료" || row["적용여부"] === "적용완료"
+      );
+      const editableRows = currentChangeRows.filter(
+        (row) => row["저장여부"] !== "저장완료" && row["적용여부"] !== "적용완료"
+      );
+      const existingEditableKeys = new Set(editableRows.map(makeSearchMergeKey));
+      const rowsToAdd = mappedResults.filter((row) => !existingEditableKeys.has(makeSearchMergeKey(row)));
+
+      return {
+        ...prev,
+        change: [...completedOrSavedRows, ...editableRows, ...rowsToAdd],
+      };
+    });
+
+    setTabMessage("change", `${results.length}건의 Control No. 데이터를 조회했습니다. 기존 저장/적용 항목은 유지했습니다.`);
   };
 
   const handleApplyChanges = async () => {
