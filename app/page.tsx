@@ -623,6 +623,13 @@ const message = messagesByTab[activeTab] ?? "";
   };
 
   const handleSave = async () => {
+    const confirmed = window.confirm("저장하시겠습니까?");
+
+    if (!confirmed) {
+      setTabMessage(activeTab, "저장이 취소되었습니다.");
+      return;
+    }
+
     try {
       const nextRowsByTab: Record<TabKey, RowData[]> = {
         ...rowsByTab,
@@ -1132,7 +1139,10 @@ await fetch("/api/rcm", {
 
     const confirmed = window.confirm(`${selectedYear}년 RCM을 삭제하시겠습니까?`);
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      setTabMessage("yearly", "선택년도 삭제가 취소되었습니다.");
+      return;
+    }
 
     const nextCompletedYearData = { ...completedYearData };
     delete nextCompletedYearData[selectedYear];
@@ -1166,6 +1176,21 @@ await fetch("/api/rcm", {
   };
 
   const handleReset = async () => {
+    const resetTabNameMap: Record<TabKey, string> = {
+      current: "당기 RCM",
+      previous: "전기 RCM",
+      change: "수정사항",
+      history: "변경이력",
+      yearly: "년도별 RCM",
+    };
+
+    const confirmed = window.confirm(`${resetTabNameMap[activeTab]} 탭을 초기화하시겠습니까?`);
+
+    if (!confirmed) {
+      setTabMessage(activeTab, "초기화가 취소되었습니다.");
+      return;
+    }
+
     if (activeTab === "current") {
       const nextRowsByTab: Record<TabKey, RowData[]> = {
         ...rowsByTab,
@@ -1279,7 +1304,10 @@ await fetch("/api/rcm", {
 
     const confirmed = window.confirm(`${checkedRows.length}건을 삭제하시겠습니까?`);
 
-    if (!confirmed) return;
+    if (!confirmed) {
+      setTabMessage("history", "변경이력 삭제가 취소되었습니다.");
+      return;
+    }
 
     const nextHistoryRows = historyRows
       .filter((row) => row.checked !== "Y")
