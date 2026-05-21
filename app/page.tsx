@@ -429,7 +429,7 @@ export default function RcmPage() {
     startRow: number,
     startCol: number
   ) => {
-    if (isLocked || activeTab === "history" || activeTab === "yearly") return;
+    if (isLocked || activeTab === "yearly" || activeTab === "change") return;
 
     event.preventDefault();
 
@@ -451,6 +451,64 @@ export default function RcmPage() {
     }
 
     if (pastedRows.length === 0) return;
+
+    if (activeTab === "history") {
+      setHistoryRows((prev) => {
+        const next = [...prev];
+
+        while (next.length < startRow + pastedRows.length) {
+          next.push({
+            checked: "",
+            no: next.length + 1,
+            담당자: "",
+            수정일: "",
+            "Mega Process": "",
+            "Control No": "",
+            "Control Name": "",
+            "변경 항목": "",
+            "AS-IS": "",
+            "TO-BE": "",
+            수정사유: "",
+          });
+        }
+
+        pastedRows.forEach((pastedRow, rIdx) => {
+          const targetRow = startRow + rIdx;
+          const updatedRow: HistoryRow = { ...next[targetRow] };
+
+          pastedRow.forEach((cell, cIdx) => {
+            const targetCol = startCol + cIdx;
+            if (targetCol >= historyColumns.length) return;
+
+            const targetColumn = historyColumns[targetCol];
+
+            if (targetColumn.key === "checked") {
+              updatedRow.checked = cell === "Y" || cell === "TRUE" || cell === "true" ? "Y" : "";
+              return;
+            }
+
+            if (targetColumn.key === "no") {
+              updatedRow.no = Number(cell) || targetRow + 1;
+              return;
+            }
+
+            (updatedRow as any)[targetColumn.key] = cell;
+          });
+
+          next[targetRow] = updatedRow;
+        });
+
+        return next.map((row, idx) => ({
+          ...row,
+          checked: row.checked ?? "",
+          no: idx + 1,
+          담당자: row["담당자"] ?? "",
+        }));
+      });
+
+      setTabMessage("history", `${pastedRows.length}행의 데이터를 변경이력 탭에 엑셀 붙여넣기로 반영했습니다.`);
+      return;
+    }
 
     updateActiveRows((prev) => {
       const next = [...prev];
@@ -1274,7 +1332,7 @@ export default function RcmPage() {
       );
     }
 
-    if (activeTab === "history" || activeTab === "yearly") {
+    if (activeTab === "yearly") {
       return (
         <div
           style={{
@@ -1285,6 +1343,32 @@ export default function RcmPage() {
         >
           {row[col.key] ?? ""}
         </div>
+      );
+    }
+
+    if (activeTab === "history") {
+      return (
+        <textarea
+          value={row[col.key] ?? ""}
+          readOnly={col.key === "no"}
+          onChange={(e) => {
+            const nextValue = e.target.value;
+            setHistoryRows((prev) =>
+              prev.map((historyRow, idx) =>
+                idx === rowIndex
+                  ? {
+                      ...historyRow,
+                      [col.key]: nextValue,
+                      no: historyRow.no,
+                    }
+                  : historyRow
+              )
+            );
+          }}
+          onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+          onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
+          style={{ ...commonStyle, resize: "vertical", whiteSpace: "pre-wrap", wordBreak: "break-word" }}
+        />
       );
     }
 
@@ -1377,9 +1461,7 @@ export default function RcmPage() {
               조회
             </button>
           </div>
-          <div style={{ fontSize: "12px", color: "#64748b" }}>
-            엑셀에서 복사한 뒤 수정사항 표의 시작 셀을 클릭하고 Ctrl+V로 붙여넣을 수 있습니다. 표가 비어 있으면 + 버튼으로 빈 행을 먼저 추가하세요.
-          </div>
+          
         </div>
       )}
 
