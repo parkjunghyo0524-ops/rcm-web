@@ -667,21 +667,7 @@ if (hasUnsavedRows) {
   window.alert("저장 후 적용이 가능합니다");
   return;
 }
-    const hasMissingRequired = checkedRows.some(
-  (row) =>
-    !String(row["Control No."] ?? "").trim() ||
-    !String(row["Major Process Code"] ?? "").trim() ||
-    !String(row["Sub Process Code"] ?? "").trim() ||
-    !String(row["담당자"] ?? "").trim() ||
-    !String(row["수정일자"] ?? "").trim() ||
-    !String(row["수정사유"] ?? "").trim()
-);
-
-    if (hasMissingRequired) {
-      window.alert("Control No., Major Process Code, Sub Process Code, 담당자, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
-      return;
-    }
-
+    
     let latestRowsByTab: Record<TabKey, RowData[]> = rowsByTab;
     let latestHistoryRows: HistoryRow[] = historyRows;
 
@@ -923,6 +909,18 @@ const handleSaveSelectedChangeRows = async () => {
 
   const changeRows = rowsByTab.change ?? [];
   const checkedRows = changeRows.filter((row) => row["적용"] === "Y");
+
+  const hasMissingRequired = checkedRows.some(
+  (row) =>
+    !String(row["담당자"] ?? "").trim() ||
+    !String(row["수정일자"] ?? "").trim() ||
+    !String(row["수정사유"] ?? "").trim()
+);
+
+if (hasMissingRequired) {
+  window.alert("담당자, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
+  return;
+}
 
   const nextChangeRows = changeRows.map((row) =>
     row["적용"] === "Y"
