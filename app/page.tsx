@@ -921,6 +921,7 @@ const handleSaveSelectedChangeRows = async () => {
   }
 
   const changeRows = rowsByTab.change ?? [];
+  const checkedRows = changeRows.filter((row) => row["적용"] === "Y");
 
   const nextChangeRows = changeRows.map((row) =>
     row["적용"] === "Y"
