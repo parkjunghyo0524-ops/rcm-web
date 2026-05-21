@@ -110,9 +110,9 @@ export default function RcmPage() {
   ];
 
   const currentOnlyColumns: Column[] = [
-    { key: "적용여부", label: "적용여부", group: "수정사항", width: 100, type: "text" },
-    { key: "적용", label: "적용", group: "수정사항", width: 80, type: "checkbox" },
-    { key: "신설/삭제", label: "신설/삭제", group: "수정사항", width: 100, type: "select", options: ["", "신설", "삭제"] },
+  { key: "적용", label: "선택", group: "수정사항", width: 80, type: "checkbox" },
+  { key: "적용여부", label: "적용여부", group: "수정사항", width: 100, type: "text" },
+  { key: "신설/삭제", label: "신설/삭제", group: "수정사항", width: 100, type: "select", options: ["", "신설", "삭제"] },
     { key: "담당자", label: "담당자", group: "수정사항", width: 120, type: "text" },
     { key: "수정일자", label: "수정일자", group: "수정사항", width: 120, type: "date" },
     { key: "수정사유", label: "수정사유", group: "수정사항", width: 300, type: "text" },
