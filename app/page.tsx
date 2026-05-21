@@ -31,6 +31,7 @@ type HistoryRow = {
 
 export default function RcmPage() {
   const commonColumns: Column[] = [
+    { key: "표시수정일자", label: "수정일자", group: "변경정보", width: 120 },
     { key: "Mega Process Code", label: "Mega Process Code", group: "Process", width: 140 },
     { key: "Mega Process Name", label: "Mega Process Name", group: "Process", width: 170 },
     { key: "Major Process Code", label: "Major Process Code", group: "Process", width: 150 },
@@ -198,6 +199,18 @@ export default function RcmPage() {
       const action = String(historyRow["변경 항목"] ?? "").trim();
       return action === "신설" || action === "삭제";
     });
+
+  const getYearMatchedModifyDates = (row: RowData, tab: TabKey) => {
+    const dates = Array.from(
+      new Set(
+        getYearMatchedHistoryRows(row, tab)
+          .map((historyRow) => String(historyRow["수정일"] ?? "").trim())
+          .filter(Boolean)
+      )
+    ).sort((a, b) => b.localeCompare(a));
+
+    return dates.join("\n");
+  };
 
   const buildEmptyRow = (tab: TabKey): RowData => {
     const row: RowData = {};
@@ -1478,7 +1491,10 @@ await fetch("/api/rcm", {
       .map((row) => {
         const cells = downloadColumns
           .map((col: Column) => {
-            const rawValue = String((row as RowData)[col.key] ?? "");
+            const rawValue =
+              col.key === "표시수정일자" && (activeTab === "current" || activeTab === "yearly")
+                ? getYearMatchedModifyDates(row as RowData, activeTab)
+                : String((row as RowData)[col.key] ?? "");
 
             const escapeHtml = (value: string) =>
               String(value ?? "")
@@ -1739,6 +1755,23 @@ await fetch("/api/rcm", {
       boxSizing: "border-box",
       background: "transparent",
     };
+
+    if (
+      col.key === "표시수정일자" &&
+      (activeTab === "current" || activeTab === "yearly")
+    ) {
+      return (
+        <div
+          style={{
+            ...commonStyle,
+            whiteSpace: "pre-wrap",
+            wordBreak: "break-word",
+          }}
+        >
+          {getYearMatchedModifyDates(row, activeTab)}
+        </div>
+      );
+    }
 
     const isReadOnlyChangeCell =
       activeTab === "change" &&
