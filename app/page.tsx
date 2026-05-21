@@ -30,9 +30,12 @@ type HistoryRow = {
 };
 
 export default function RcmPage() {
-  const commonColumns: Column[] = [
+  const changeInfoColumns: Column[] = [
     { key: "표시수정일자", label: "수정일자", group: "변경정보", width: 120 },
     { key: "표시수정사유", label: "수정사유", group: "변경정보", width: 240 },
+  ];
+
+  const commonColumns: Column[] = [
     { key: "Mega Process Code", label: "Mega Process Code", group: "Process", width: 140 },
     { key: "Mega Process Name", label: "Mega Process Name", group: "Process", width: 170 },
     { key: "Major Process Code", label: "Major Process Code", group: "Process", width: 150 },
@@ -138,6 +141,7 @@ export default function RcmPage() {
   const getColumnsByTab = (tab: TabKey): Column[] => {
     if (tab === "change") return [...currentOnlyColumns, ...commonColumns];
     if (tab === "history") return historyColumns;
+    if (tab === "current" || tab === "yearly") return [...changeInfoColumns, ...commonColumns];
     return commonColumns;
   };
 
