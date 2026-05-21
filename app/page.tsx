@@ -668,16 +668,17 @@ if (hasUnsavedRows) {
   return;
 }
     const hasMissingRequired = checkedRows.some(
-      (row) =>
-        !String(row["Control No."] ?? "").trim() ||
-        !String(row["Major Process Code"] ?? "").trim() ||
-        !String(row["Sub Process Code"] ?? "").trim() ||
-        !String(row["수정일자"] ?? "").trim() ||
-        !String(row["수정사유"] ?? "").trim()
-    );
+  (row) =>
+    !String(row["Control No."] ?? "").trim() ||
+    !String(row["Major Process Code"] ?? "").trim() ||
+    !String(row["Sub Process Code"] ?? "").trim() ||
+    !String(row["담당자"] ?? "").trim() ||
+    !String(row["수정일자"] ?? "").trim() ||
+    !String(row["수정사유"] ?? "").trim()
+);
 
     if (hasMissingRequired) {
-      window.alert("Control No., Major Process Code, Sub Process Code, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
+      window.alert("Control No., Major Process Code, Sub Process Code, 담당자, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
       return;
     }
 
