@@ -1352,7 +1352,29 @@ await fetch("/api/rcm", {
               .replace(/>/g, "&gt;")
               .replace(/\n/g, " ");
 
-            return `<td>${value}</td>`;
+            const previousRow =
+  activeTab === "current"
+    ? (rowsByTab.previous ?? []).find((prevRow) =>
+        isSameApplyTarget(prevRow, row as RowData)
+      )
+    : null;
+
+const isChangedCell =
+  activeTab === "current" &&
+  previousRow &&
+  String(previousRow[col.key] ?? "").trim() !==
+    String((row as RowData)[col.key] ?? "").trim();
+
+const isRedText =
+  String((row as RowData)["신설/삭제"] ?? "").trim() === "신설" ||
+  String((row as RowData)["신설/삭제"] ?? "").trim() === "삭제";
+
+const style = `
+  ${isRedText ? "color:red;font-weight:bold;" : ""}
+  ${isChangedCell ? "color:#2563eb;font-weight:bold;" : ""}
+`;
+
+return `<td style="${style}">${value}</td>`;
           })
           .join("");
 
