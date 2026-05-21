@@ -112,11 +112,12 @@ export default function RcmPage() {
   const currentOnlyColumns: Column[] = [
   { key: "적용", label: "선택", group: "수정사항", width: 80, type: "checkbox" },
   { key: "적용여부", label: "적용여부", group: "수정사항", width: 100, type: "text" },
+  { key: "저장완료", label: "저장완료", group: "수정사항", width: 100, type: "text" },
   { key: "신설/삭제", label: "신설/삭제", group: "수정사항", width: 100, type: "select", options: ["", "신설", "삭제"] },
-    { key: "담당자", label: "담당자", group: "수정사항", width: 120, type: "text" },
-    { key: "수정일자", label: "수정일자", group: "수정사항", width: 120, type: "date" },
-    { key: "수정사유", label: "수정사유", group: "수정사항", width: 300, type: "text" },
-  ];
+  { key: "담당자", label: "담당자", group: "수정사항", width: 120, type: "text" },
+  { key: "수정일자", label: "수정일자", group: "수정사항", width: 120, type: "date" },
+  { key: "수정사유", label: "수정사유", group: "수정사항", width: 300, type: "text" },
+];
 
   const historyColumns: Column[] = [
     { key: "checked", label: "삭제", group: "변경이력", width: 50, type: "checkbox" },
@@ -905,7 +906,84 @@ const message = messagesByTab[activeTab] ?? "";
   setTabMessage("change", `적용사항 저장 실패: ${e.message}`);
 }
   };
+const handleSaveSelectedChangeRows = async () => {
+  if (activeTab !== "change") return;
 
+  const changeRows = rowsByTab.change ?? [];
+  const checkedRows = changeRows.filter((row) => row["적용"] === "Y");
+
+  if (checkedRows.length === 0) {
+    window.alert("저장할 항목을 선택해주세요.");
+    return;
+  }
+
+  const nextChangeRows = changeRows.map((row) =>
+    row["적용"] === "Y"
+      ? {
+          ...row,
+          적용: "",
+          저장완료: "저장완료",
+        }
+      : row
+  );
+
+  const nextRowsByTab: Record<TabKey, RowData[]> = {
+    ...rowsByTab,
+    change: nextChangeRows,
+  };
+
+  try {
+    await saveToLocalStorage(
+      nextRowsByTab,
+      yearValue,
+      lockedTabs,
+      historyRows,
+      completedYearData,
+      ["change"]
+    );
+
+    setRowsByTab(nextRowsByTab);
+    setTabMessage("change", `${checkedRows.length}건의 수정사항을 저장했습니다.`);
+  } catch (e: any) {
+    setTabMessage("change", `수정사항 저장 실패: ${e.message}`);
+  }
+};
+
+const handleDeleteSelectedChangeRows = async () => {
+  if (activeTab !== "change") return;
+
+  const changeRows = rowsByTab.change ?? [];
+  const checkedRows = changeRows.filter((row) => row["적용"] === "Y");
+
+  if (checkedRows.length === 0) {
+    window.alert("삭제할 항목을 선택해주세요.");
+    return;
+  }
+
+  const confirmed = window.confirm(`${checkedRows.length}건을 수정사항 탭에서 삭제하시겠습니까?`);
+  if (!confirmed) return;
+
+  const nextRowsByTab: Record<TabKey, RowData[]> = {
+    ...rowsByTab,
+    change: changeRows.filter((row) => row["적용"] !== "Y"),
+  };
+
+  try {
+    await saveToLocalStorage(
+      nextRowsByTab,
+      yearValue,
+      lockedTabs,
+      historyRows,
+      completedYearData,
+      ["change"]
+    );
+
+    setRowsByTab(nextRowsByTab);
+    setTabMessage("change", `${checkedRows.length}건의 수정사항을 삭제했습니다.`);
+  } catch (e: any) {
+    setTabMessage("change", `수정사항 삭제 저장 실패: ${e.message}`);
+  }
+};
   const handleFinalizeCurrentYear = async () => {
     const year = yearValue.trim();
 
@@ -1535,8 +1613,14 @@ if (activeTab === "history" || activeTab === "yearly") {
               +
             </button>
             <button onClick={handleApplyChanges} style={{ background: "#2563eb", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
-              적용
-            </button>
+  적용
+</button>
+<button onClick={handleSaveSelectedChangeRows} style={{ background: "#16a34a", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+  저장
+</button>
+<button onClick={handleDeleteSelectedChangeRows} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+  삭제
+</button>
           </>
         )}
 
