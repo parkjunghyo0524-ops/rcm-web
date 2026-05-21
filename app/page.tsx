@@ -1345,36 +1345,89 @@ await fetch("/api/rcm", {
     const bodyHtml = downloadRows
       .map((row) => {
         const cells = downloadColumns
-  .map((col: Column) => {
-    const value = String((row as RowData)[col.key] ?? "")
-              .replace(/&/g, "&amp;")
-              .replace(/</g, "&lt;")
-              .replace(/>/g, "&gt;")
-              .replace(/\n/g, " ");
+          .map((col: Column) => {
+            const rawValue = String((row as RowData)[col.key] ?? "");
+
+            const escapeHtml = (value: string) =>
+              String(value ?? "")
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/\n/g, " ");
+
+            const getExcelChangedTextHtml = (oldValue: string, newValue: string) => {
+              if (!oldValue || oldValue === newValue) return escapeHtml(newValue);
+
+              let prefixLength = 0;
+              while (
+                prefixLength < oldValue.length &&
+                prefixLength < newValue.length &&
+                oldValue[prefixLength] === newValue[prefixLength]
+              ) {
+                prefixLength += 1;
+              }
+
+              let suffixLength = 0;
+              while (
+                suffixLength < oldValue.length - prefixLength &&
+                suffixLength < newValue.length - prefixLength &&
+                oldValue[oldValue.length - 1 - suffixLength] ===
+                  newValue[newValue.length - 1 - suffixLength]
+              ) {
+                suffixLength += 1;
+              }
+
+              const before = newValue.slice(0, prefixLength);
+              const changed = newValue.slice(
+                prefixLength,
+                suffixLength === 0 ? newValue.length : newValue.length - suffixLength
+              );
+              const after = suffixLength === 0 ? "" : newValue.slice(newValue.length - suffixLength);
+
+              if (!changed) return escapeHtml(newValue);
+
+              return `${escapeHtml(before)}<span style="color:#2563eb;font-weight:bold;">${escapeHtml(changed)}</span>${escapeHtml(after)}`;
+            };
 
             const previousRow =
-  activeTab === "current"
-    ? (rowsByTab.previous ?? []).find((prevRow) =>
-        isSameApplyTarget(prevRow, row as RowData)
-      )
-    : null;
+              activeTab === "current"
+                ? (rowsByTab.previous ?? []).find((prevRow) =>
+                    isSameApplyTarget(prevRow, row as RowData)
+                  )
+                : null;
 
-const isChangedCell =
-  activeTab === "current" &&
-  previousRow &&
-  String(previousRow[col.key] ?? "").trim() !==
-    String((row as RowData)[col.key] ?? "").trim();
+            const isCurrentChangedCell =
+              activeTab === "current" &&
+              previousRow &&
+              String(previousRow[col.key] ?? "").trim() !==
+                String((row as RowData)[col.key] ?? "").trim();
 
-const isRedText =
-  String((row as RowData)["신설/삭제"] ?? "").trim() === "신설" ||
-  String((row as RowData)["신설/삭제"] ?? "").trim() === "삭제";
+            const isHistoryChangedToBeCell =
+              activeTab === "history" &&
+              col.key === "TO-BE" &&
+              String((row as RowData)["AS-IS"] ?? "").trim() !==
+                String((row as RowData)["TO-BE"] ?? "").trim();
 
-const style = `
-  ${isRedText ? "color:red;font-weight:bold;" : ""}
-  ${isChangedCell ? "color:#2563eb;font-weight:bold;" : ""}
-`;
+            const isRedText =
+              String((row as RowData)["신설/삭제"] ?? "").trim() === "신설" ||
+              String((row as RowData)["신설/삭제"] ?? "").trim() === "삭제" ||
+              String((row as RowData)["변경 항목"] ?? "").trim() === "신설" ||
+              String((row as RowData)["변경 항목"] ?? "").trim() === "삭제";
 
-return `<td style="${style}">${value}</td>`;
+            let style = "";
+            let valueHtml = escapeHtml(rawValue);
+
+            if (isRedText) {
+              style = "color:#dc2626;font-weight:bold;";
+            } else if (isCurrentChangedCell && previousRow) {
+              style = "color:#2563eb;font-weight:bold;";
+              valueHtml = getExcelChangedTextHtml(String(previousRow[col.key] ?? ""), rawValue);
+            } else if (isHistoryChangedToBeCell) {
+              style = "color:#2563eb;font-weight:bold;";
+              valueHtml = getExcelChangedTextHtml(String((row as RowData)["AS-IS"] ?? ""), rawValue);
+            }
+
+            return `<td style="${style}">${valueHtml}</td>`;
           })
           .join("");
 
@@ -1865,7 +1918,17 @@ return `<td style="${style}">${value}</td>`;
           </thead>
           <tbody>
             {filtered.map((row: RowData, rowIndex: number) => (
-              <tr key={rowIndex} style={{ backgroundColor: row["신설/삭제"] === "삭제" ? "#e5e7eb" : rowIndex % 2 === 0 ? "#ffffff" : "#f8fbff" }}>
+              <tr
+                key={rowIndex}
+                style={{
+                  backgroundColor:
+                    row["신설/삭제"] === "삭제"
+                      ? "#e5e7eb"
+                      : rowIndex % 2 === 0
+                      ? "#ffffff"
+                      : "#f8fbff",
+                }}
+              >
                 {columns.map((col: Column, colIndex: number) => (
                   <td key={col.key} style={{ border: activeTab !== "history" && activeTab !== "yearly" && activeCell?.row === rowIndex && activeCell?.col === colIndex ? "2px solid #2563eb" : "1px solid #c2cfdf", padding: "0", verticalAlign: "top", width: col.width, minWidth: col.width, maxWidth: col.width, backgroundColor: activeTab !== "history" && activeTab !== "yearly" && activeCell?.row === rowIndex && activeCell?.col === colIndex ? "#eff6ff" : undefined }}>
                     {renderCellInput(col, row, rowIndex, colIndex)}
