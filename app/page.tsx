@@ -1423,6 +1423,92 @@ await fetch("/api/rcm", {
     fontWeight: 600,
   });
 
+  const getChangedTextParts = (oldValue: string, newValue: string) => {
+    if (!oldValue || oldValue === newValue) {
+      return {
+        before: "",
+        changed: newValue,
+        after: "",
+      };
+    }
+
+    let prefixLength = 0;
+    while (
+      prefixLength < oldValue.length &&
+      prefixLength < newValue.length &&
+      oldValue[prefixLength] === newValue[prefixLength]
+    ) {
+      prefixLength += 1;
+    }
+
+    let suffixLength = 0;
+    while (
+      suffixLength < oldValue.length - prefixLength &&
+      suffixLength < newValue.length - prefixLength &&
+      oldValue[oldValue.length - 1 - suffixLength] ===
+        newValue[newValue.length - 1 - suffixLength]
+    ) {
+      suffixLength += 1;
+    }
+
+    const before = newValue.slice(0, prefixLength);
+    const changed = newValue.slice(
+      prefixLength,
+      suffixLength === 0 ? newValue.length : newValue.length - suffixLength
+    );
+    const after = suffixLength === 0 ? "" : newValue.slice(newValue.length - suffixLength);
+
+    return { before, changed, after };
+  };
+
+  const renderHighlightedText = (
+    value: string,
+    options?: { oldValue?: string; highlightChanged?: boolean; red?: boolean }
+  ) => {
+    if (options?.red) {
+      return <span style={{ color: "#dc2626", fontWeight: 700 }}>{value}</span>;
+    }
+
+    if (!options?.highlightChanged || options.oldValue === undefined || options.oldValue === value) {
+      return <>{value}</>;
+    }
+
+    const parts = getChangedTextParts(options.oldValue, value);
+
+    if (!parts.changed) {
+      return <>{value}</>;
+    }
+
+    return (
+      <>
+        <span>{parts.before}</span>
+        <span style={{ color: "#2563eb", fontWeight: 700 }}>{parts.changed}</span>
+        <span>{parts.after}</span>
+      </>
+    );
+  };
+
+  const renderDisplayCell = (
+    col: Column,
+    row: RowData,
+    commonStyle: React.CSSProperties,
+    options?: { oldValue?: string; highlightChanged?: boolean; red?: boolean }
+  ) => {
+    const value = String(row[col.key] ?? "");
+
+    return (
+      <div
+        style={{
+          ...commonStyle,
+          whiteSpace: "pre-wrap",
+          wordBreak: "break-word",
+        }}
+      >
+        {renderHighlightedText(value, options)}
+      </div>
+    );
+  };
+
   const renderCellInput = (col: Column, row: RowData, rowIndex: number, colIndex: number) => {
     const commonStyle: React.CSSProperties = {
       width: "100%",
@@ -1441,59 +1527,89 @@ await fetch("/api/rcm", {
       activeTab === "change" &&
       (isChangeStatusColumn(col.key) || (isCompletedChangeRow(row) && col.key !== "적용"));
 
-     if (col.type === "checkbox") {
-  return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "transparent",
-      }}
-    >
-      <input
-        type="checkbox"
-        checked={row[col.key] === "Y"}
-        disabled={isLocked || isReadOnlyChangeCell}
-        onChange={(e) => {
-          const checked = e.target.checked;
-          const nextValue = checked ? "Y" : "";
+    const historyAction = String(row["변경 항목"] ?? "").trim();
+    const isHistoryCreateOrDelete =
+      activeTab === "history" && (historyAction === "신설" || historyAction === "삭제");
 
-          if ((activeTab as TabKey) === "history") {
-            setHistoryRows((prev) =>
-              prev.map((r, idx) =>
-                idx === rowIndex ? { ...r, checked: nextValue } : r
-              )
-            );
-            return;
-          }
+    const previousRow =
+      activeTab === "current"
+        ? (rowsByTab.previous ?? []).find((prevRow) => isSameApplyTarget(prevRow, row)) ?? null
+        : null;
 
-          handleSingleCellChange(rowIndex, col.key, nextValue);
-        }}
-        onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-        style={{
-          width: "16px",
-          height: "16px",
-          cursor: isLocked || isReadOnlyChangeCell ? "default" : "pointer",
-        }}
-      />
-    </div>
-  );
-}
-if (activeTab === "history" || activeTab === "yearly") {
+    const currentControlNo = String(row["Control No."] ?? "").trim();
+    const isCurrentCreateOrDelete =
+      activeTab === "current" &&
+      currentControlNo !== "" &&
+      historyRows.some(
+        (historyRow) =>
+          String(historyRow["Control No"] ?? "").trim() === currentControlNo &&
+          (historyRow["변경 항목"] === "신설" || historyRow["변경 항목"] === "삭제")
+      );
+
+    const isCurrentChangedCell =
+      activeTab === "current" &&
+      previousRow !== null &&
+      String(previousRow[col.key] ?? "").trim() !== String(row[col.key] ?? "").trim();
+
+    if (col.type === "checkbox") {
       return (
         <div
           style={{
-            ...commonStyle,
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-word",
+            width: "100%",
+            minHeight: "42px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
           }}
         >
-          {row[col.key] ?? ""}
+          <input
+            type="checkbox"
+            checked={row[col.key] === "Y"}
+            disabled={isLocked || isReadOnlyChangeCell}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              const nextValue = checked ? "Y" : "";
+
+              if ((activeTab as TabKey) === "history") {
+                setHistoryRows((prev) =>
+                  prev.map((r, idx) => (idx === rowIndex ? { ...r, checked: nextValue } : r))
+                );
+                return;
+              }
+
+              handleSingleCellChange(rowIndex, col.key, nextValue);
+            }}
+            onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+            style={{
+              width: "16px",
+              height: "16px",
+              cursor: isLocked || isReadOnlyChangeCell ? "default" : "pointer",
+            }}
+          />
         </div>
       );
+    }
+
+    if (activeTab === "history") {
+      const oldValue = String(row["AS-IS"] ?? "");
+      return renderDisplayCell(col, row, commonStyle, {
+        oldValue,
+        highlightChanged: col.key === "TO-BE" && !isHistoryCreateOrDelete,
+        red: isHistoryCreateOrDelete,
+      });
+    }
+
+    if (activeTab === "yearly") {
+      return renderDisplayCell(col, row, commonStyle);
+    }
+
+    if (activeTab === "current" && (isLocked || isCurrentCreateOrDelete || isCurrentChangedCell)) {
+      return renderDisplayCell(col, row, commonStyle, {
+        oldValue: String(previousRow?.[col.key] ?? ""),
+        highlightChanged: Boolean(previousRow) && isCurrentChangedCell && !isCurrentCreateOrDelete,
+        red: isCurrentCreateOrDelete,
+      });
     }
 
     if (col.type === "select") {
@@ -1515,39 +1631,19 @@ if (activeTab === "history" || activeTab === "yearly") {
       );
     }
 
-
-    if ((col.type as Column["type"]) === "select") {
-  return (
-    <select
-      value={row[col.key] ?? ""}
-      disabled={isLocked || isReadOnlyChangeCell}
-      onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
-      onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-      onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
-      style={{ ...commonStyle, minHeight: "42px" }}
-    >
-      {(col.options ?? [""]).map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  );
-}
-
     if (col.type === "date") {
       return (
         <input
-  type="text"
-  placeholder="YYYY-MM-DD"
-  value={row[col.key] ?? ""}
-  disabled={isLocked || isReadOnlyChangeCell}
-  readOnly={isLocked || isReadOnlyChangeCell}
-  onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
-  onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-  onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
-  style={{ ...commonStyle, minHeight: "42px" }}
-/>
+          type="text"
+          placeholder="YYYY-MM-DD"
+          value={row[col.key] ?? ""}
+          disabled={isLocked || isReadOnlyChangeCell}
+          readOnly={isLocked || isReadOnlyChangeCell}
+          onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
+          onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+          onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
+          style={{ ...commonStyle, minHeight: "42px" }}
+        />
       );
     }
 
