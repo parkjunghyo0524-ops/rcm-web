@@ -661,7 +661,12 @@ const message = messagesByTab[activeTab] ?? "";
       setTabMessage("change", "적용여부가 체크된 수정사항이 없습니다.");
       return;
     }
+const hasUnsavedRows = checkedRows.some((row) => row["저장완료"] !== "저장완료");
 
+if (hasUnsavedRows) {
+  window.alert("저장 후 적용이 가능합니다");
+  return;
+}
     const hasMissingRequired = checkedRows.some(
       (row) =>
         !String(row["Control No."] ?? "").trim() ||
@@ -909,13 +914,13 @@ const message = messagesByTab[activeTab] ?? "";
 const handleSaveSelectedChangeRows = async () => {
   if (activeTab !== "change") return;
 
-  const changeRows = rowsByTab.change ?? [];
-  const checkedRows = changeRows.filter((row) => row["적용"] === "Y");
-
-  if (checkedRows.length === 0) {
-    window.alert("저장할 항목을 선택해주세요.");
+  const confirmed = window.confirm("저장하시겠습니까?");
+  if (!confirmed) {
+    setTabMessage("change", "저장이 취소되었습니다.");
     return;
   }
+
+  const changeRows = rowsByTab.change ?? [];
 
   const nextChangeRows = changeRows.map((row) =>
     row["적용"] === "Y"
@@ -960,8 +965,11 @@ const handleDeleteSelectedChangeRows = async () => {
     return;
   }
 
-  const confirmed = window.confirm(`${checkedRows.length}건을 수정사항 탭에서 삭제하시겠습니까?`);
-  if (!confirmed) return;
+  const confirmed = window.confirm("삭제하시겠습니까?");
+if (!confirmed) {
+  setTabMessage("change", "삭제가 취소되었습니다.");
+  return;
+}
 
   const nextRowsByTab: Record<TabKey, RowData[]> = {
     ...rowsByTab,
