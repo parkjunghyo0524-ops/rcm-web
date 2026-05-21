@@ -1577,7 +1577,11 @@ await fetch("/api/rcm", {
             let valueHtml = escapeHtml(rawValue);
 
             if (isRedText) {
-              style = "color:#dc2626;font-weight:bold;";
+              style =
+  String((row as RowData)["변경 항목"] ?? "").trim() === "신설" ||
+  String((row as RowData)["신설/삭제"] ?? "").trim() === "신설"
+    ? "color:#16a34a;font-weight:bold;"
+    : "color:#dc2626;font-weight:bold;";
             } else if (isYearMatchedChangedCell && yearMatchedHistoryChange) {
               style = "color:#2563eb;font-weight:bold;";
               valueHtml = getExcelChangedTextHtml(String(yearMatchedHistoryChange["AS-IS"] ?? ""), rawValue);
@@ -1718,7 +1722,15 @@ await fetch("/api/rcm", {
     options?: { oldValue?: string; highlightChanged?: boolean; red?: boolean }
   ) => {
     if (options?.red) {
-      return <span style={{ color: "#dc2626", fontWeight: 700 }}>{value}</span>;
+      return <span
+  style={{
+    color:
+      value === "신설"
+        ? "#16a34a"
+        : "#dc2626",
+    fontWeight: 700,
+  }}
+>{value}</span>;
     }
 
     if (!options?.highlightChanged || options.oldValue === undefined || options.oldValue === value) {
