@@ -32,6 +32,7 @@ type HistoryRow = {
 export default function RcmPage() {
   const commonColumns: Column[] = [
     { key: "표시수정일자", label: "수정일자", group: "변경정보", width: 120 },
+    { key: "표시수정사유", label: "수정사유", group: "변경정보", width: 240 },
     { key: "Mega Process Code", label: "Mega Process Code", group: "Process", width: 140 },
     { key: "Mega Process Name", label: "Mega Process Name", group: "Process", width: 170 },
     { key: "Major Process Code", label: "Major Process Code", group: "Process", width: 150 },
@@ -210,6 +211,18 @@ export default function RcmPage() {
     ).sort((a, b) => b.localeCompare(a));
 
     return dates.join("\n");
+  };
+
+  const getYearMatchedModifyReasons = (row: RowData, tab: TabKey) => {
+    const reasons = Array.from(
+      new Set(
+        getYearMatchedHistoryRows(row, tab)
+          .map((historyRow) => String(historyRow["수정사유"] ?? "").trim())
+          .filter(Boolean)
+      )
+    );
+
+    return reasons.join("\n");
   };
 
   const buildEmptyRow = (tab: TabKey): RowData => {
@@ -1494,6 +1507,8 @@ await fetch("/api/rcm", {
             const rawValue =
               col.key === "표시수정일자" && (activeTab === "current" || activeTab === "yearly")
                 ? getYearMatchedModifyDates(row as RowData, activeTab)
+                : col.key === "표시수정사유" && (activeTab === "current" || activeTab === "yearly")
+                ? getYearMatchedModifyReasons(row as RowData, activeTab)
                 : String((row as RowData)[col.key] ?? "");
 
             const escapeHtml = (value: string) =>
@@ -1757,7 +1772,7 @@ await fetch("/api/rcm", {
     };
 
     if (
-      col.key === "표시수정일자" &&
+      (col.key === "표시수정일자" || col.key === "표시수정사유") &&
       (activeTab === "current" || activeTab === "yearly")
     ) {
       return (
@@ -1768,7 +1783,9 @@ await fetch("/api/rcm", {
             wordBreak: "break-word",
           }}
         >
-          {getYearMatchedModifyDates(row, activeTab)}
+          {col.key === "표시수정일자"
+            ? getYearMatchedModifyDates(row, activeTab)
+            : getYearMatchedModifyReasons(row, activeTab)}
         </div>
       );
     }
