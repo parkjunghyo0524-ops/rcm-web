@@ -403,9 +403,13 @@ const message = messagesByTab[activeTab] ?? "";
     const result: Record<string, string[]> = {};
     for (const col of columns) {
       const values = Array.from(
-        new Set(activeRows.map((row: RowData) => String(row[col.key] ?? "")).filter(Boolean))
-      );
-      result[col.key] = values.sort((a, b) => a.localeCompare(b, "ko"));
+  new Set<string>(
+    activeRows
+      .map((row: RowData) => String(row[col.key] ?? ""))
+      .filter(Boolean)
+  )
+);
+result[col.key] = values.sort((a, b) => a.localeCompare(b, "ko"));
     }
     return result;
   }, [activeRows, columns]);
@@ -1128,6 +1132,72 @@ await fetch("/api/rcm", {
       setTabMessage("current", `${year}년 RCM이 최종완료되어 년도별 RCM 탭에 반영되었습니다.`);
     } catch {
       setTabMessage("current", "최종완료 저장에 실패했습니다.");
+    }
+  };
+
+
+  const handleCarryForwardCurrentYear = async () => {
+    const currentYear = yearValue.trim();
+
+    if (!currentYear) {
+      window.alert("당기 RCM의 년도를 입력해주세요.");
+      return;
+    }
+
+    const numericYear = Number(currentYear);
+
+    if (!Number.isInteger(numericYear)) {
+      window.alert("년도는 숫자로 입력해주세요. 예: 2026");
+      return;
+    }
+
+    const nextYear = String(numericYear + 1);
+    const confirmed = window.confirm(
+      `${currentYear}년 당기 RCM을 ${nextYear}년으로 이월하시겠습니까?
+
+전기 RCM은 현재 당기 RCM 데이터로 교체되고, 당기 RCM도 동일 데이터로 저장됩니다.`
+    );
+
+    if (!confirmed) {
+      setTabMessage("current", "차기 이월이 취소되었습니다.");
+      return;
+    }
+
+    const carriedRows = (rowsByTab.current ?? []).map((row) => ({ ...row }));
+
+    if (carriedRows.length === 0) {
+      window.alert("이월할 당기 RCM 데이터가 없습니다.");
+      return;
+    }
+
+    const nextRowsByTab: Record<TabKey, RowData[]> = {
+      ...rowsByTab,
+      previous: carriedRows.map((row) => ({ ...row })),
+      current: carriedRows.map((row) => ({ ...row })),
+    };
+
+    const nextLockedTabs = {
+      ...lockedTabs,
+      previous: true,
+      current: false,
+    };
+
+    try {
+      await saveToLocalStorage(
+        nextRowsByTab,
+        nextYear,
+        nextLockedTabs,
+        historyRows,
+        completedYearData,
+        ["previous", "current"]
+      );
+
+      setRowsByTab(nextRowsByTab);
+      setYearValue(nextYear);
+      setLockedTabs(nextLockedTabs);
+      setTabMessage("current", `${currentYear}년 당기 RCM을 ${nextYear}년으로 이월했습니다.`);
+    } catch (e: any) {
+      setTabMessage("current", `차기 이월 저장 실패: ${e.message}`);
     }
   };
 
@@ -1862,9 +1932,14 @@ await fetch("/api/rcm", {
           </>
         )}
         {activeTab === "current" && (
-          <button onClick={handleFinalizeCurrentYear} style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
-            최종완료
-          </button>
+          <>
+            <button onClick={handleFinalizeCurrentYear} style={{ background: "#7c3aed", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+              최종완료
+            </button>
+            <button onClick={handleCarryForwardCurrentYear} style={{ background: "#0f766e", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+              차기 이월
+            </button>
+          </>
         )}
 
         {activeTab === "yearly" && (
