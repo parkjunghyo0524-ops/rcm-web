@@ -165,6 +165,40 @@ export default function RcmPage() {
   const isCompletedChangeRow = (row: RowData) =>
     row["저장여부"] === "저장완료" || row["적용여부"] === "적용완료";
 
+  const getYearFromDate = (date: unknown) => String(date ?? "").trim().slice(0, 4);
+
+  const getColorCompareYear = (tab: TabKey) => {
+    if (tab === "current") return String(yearValue ?? "").trim();
+    if (tab === "yearly") return String(selectedYear ?? "").trim();
+    return "";
+  };
+
+  const getYearMatchedHistoryRows = (row: RowData, tab: TabKey) => {
+    if (tab !== "current" && tab !== "yearly") return [];
+
+    const compareYear = getColorCompareYear(tab);
+    const controlNo = String(row["Control No."] ?? "").trim();
+
+    if (!compareYear || !controlNo) return [];
+
+    return historyRows.filter(
+      (historyRow) =>
+        getYearFromDate(historyRow["수정일"]) === compareYear &&
+        String(historyRow["Control No"] ?? "").trim() === controlNo
+    );
+  };
+
+  const getYearMatchedHistoryChange = (row: RowData, colKey: string, tab: TabKey) =>
+    getYearMatchedHistoryRows(row, tab).find(
+      (historyRow) => String(historyRow["변경 항목"] ?? "").trim() === colKey
+    );
+
+  const hasYearMatchedCreateOrDelete = (row: RowData, tab: TabKey) =>
+    getYearMatchedHistoryRows(row, tab).some((historyRow) => {
+      const action = String(historyRow["변경 항목"] ?? "").trim();
+      return action === "신설" || action === "삭제";
+    });
+
   const buildEmptyRow = (tab: TabKey): RowData => {
     const row: RowData = {};
     getColumnsByTab(tab).forEach((col) => {
@@ -1389,18 +1423,11 @@ await fetch("/api/rcm", {
               return `${escapeHtml(before)}<span style="color:#2563eb;font-weight:bold;">${escapeHtml(changed)}</span>${escapeHtml(after)}`;
             };
 
-            const previousRow =
-              activeTab === "current"
-                ? (rowsByTab.previous ?? []).find((prevRow) =>
-                    isSameApplyTarget(prevRow, row as RowData)
-                  )
-                : null;
+            const yearMatchedHistoryChange = getYearMatchedHistoryChange(row as RowData, col.key, activeTab);
 
-            const isCurrentChangedCell =
-              activeTab === "current" &&
-              previousRow &&
-              String(previousRow[col.key] ?? "").trim() !==
-                String((row as RowData)[col.key] ?? "").trim();
+            const isYearMatchedChangedCell =
+              (activeTab === "current" || activeTab === "yearly") &&
+              Boolean(yearMatchedHistoryChange);
 
             const isHistoryChangedToBeCell =
               activeTab === "history" &&
@@ -1409,8 +1436,7 @@ await fetch("/api/rcm", {
                 String((row as RowData)["TO-BE"] ?? "").trim();
 
             const isRedText =
-              String((row as RowData)["신설/삭제"] ?? "").trim() === "신설" ||
-              String((row as RowData)["신설/삭제"] ?? "").trim() === "삭제" ||
+              hasYearMatchedCreateOrDelete(row as RowData, activeTab) ||
               String((row as RowData)["변경 항목"] ?? "").trim() === "신설" ||
               String((row as RowData)["변경 항목"] ?? "").trim() === "삭제";
 
@@ -1419,9 +1445,9 @@ await fetch("/api/rcm", {
 
             if (isRedText) {
               style = "color:#dc2626;font-weight:bold;";
-            } else if (isCurrentChangedCell && previousRow) {
+            } else if (isYearMatchedChangedCell && yearMatchedHistoryChange) {
               style = "color:#2563eb;font-weight:bold;";
-              valueHtml = getExcelChangedTextHtml(String(previousRow[col.key] ?? ""), rawValue);
+              valueHtml = getExcelChangedTextHtml(String(yearMatchedHistoryChange["AS-IS"] ?? ""), rawValue);
             } else if (isHistoryChangedToBeCell) {
               style = "color:#2563eb;font-weight:bold;";
               valueHtml = getExcelChangedTextHtml(String((row as RowData)["AS-IS"] ?? ""), rawValue);
@@ -1606,25 +1632,10 @@ await fetch("/api/rcm", {
     const isHistoryCreateOrDelete =
       activeTab === "history" && (historyAction === "신설" || historyAction === "삭제");
 
-    const previousRow =
-      activeTab === "current"
-        ? (rowsByTab.previous ?? []).find((prevRow) => isSameApplyTarget(prevRow, row)) ?? null
-        : null;
-
-    const currentControlNo = String(row["Control No."] ?? "").trim();
-    const isCurrentCreateOrDelete =
-      activeTab === "current" &&
-      currentControlNo !== "" &&
-      historyRows.some(
-        (historyRow) =>
-          String(historyRow["Control No"] ?? "").trim() === currentControlNo &&
-          (historyRow["변경 항목"] === "신설" || historyRow["변경 항목"] === "삭제")
-      );
-
-    const isCurrentChangedCell =
-      activeTab === "current" &&
-      previousRow !== null &&
-      String(previousRow[col.key] ?? "").trim() !== String(row[col.key] ?? "").trim();
+    const yearMatchedHistoryChange = getYearMatchedHistoryChange(row, col.key, activeTab);
+    const isYearMatchedCreateOrDelete = hasYearMatchedCreateOrDelete(row, activeTab);
+    const isYearMatchedChangedCell =
+      (activeTab === "current" || activeTab === "yearly") && Boolean(yearMatchedHistoryChange);
 
     if (col.type === "checkbox") {
       return (
@@ -1676,14 +1687,18 @@ await fetch("/api/rcm", {
     }
 
     if (activeTab === "yearly") {
-      return renderDisplayCell(col, row, commonStyle);
+      return renderDisplayCell(col, row, commonStyle, {
+        oldValue: String(yearMatchedHistoryChange?.["AS-IS"] ?? ""),
+        highlightChanged: Boolean(yearMatchedHistoryChange) && !isYearMatchedCreateOrDelete,
+        red: isYearMatchedCreateOrDelete,
+      });
     }
 
-    if (activeTab === "current" && (isLocked || isCurrentCreateOrDelete || isCurrentChangedCell)) {
+    if (activeTab === "current" && (isLocked || isYearMatchedCreateOrDelete || isYearMatchedChangedCell)) {
       return renderDisplayCell(col, row, commonStyle, {
-        oldValue: String(previousRow?.[col.key] ?? ""),
-        highlightChanged: Boolean(previousRow) && isCurrentChangedCell && !isCurrentCreateOrDelete,
-        red: isCurrentCreateOrDelete,
+        oldValue: String(yearMatchedHistoryChange?.["AS-IS"] ?? ""),
+        highlightChanged: Boolean(yearMatchedHistoryChange) && !isYearMatchedCreateOrDelete,
+        red: isYearMatchedCreateOrDelete,
       });
     }
 
