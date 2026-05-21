@@ -158,6 +158,13 @@ export default function RcmPage() {
     );
   };
 
+
+  const isChangeStatusColumn = (colKey: string) =>
+    colKey === "적용여부" || colKey === "저장여부";
+
+  const isCompletedChangeRow = (row: RowData) =>
+    row["저장여부"] === "저장완료" || row["적용여부"] === "적용완료";
+
   const buildEmptyRow = (tab: TabKey): RowData => {
     const row: RowData = {};
     getColumnsByTab(tab).forEach((col) => {
@@ -466,6 +473,15 @@ const message = messagesByTab[activeTab] ?? "";
           const targetCol = startCol + cIdx;
           if (targetCol < columns.length) {
             const targetColumn = columns[targetCol];
+
+            if (
+              activeTab === "change" &&
+              (isChangeStatusColumn(targetColumn.key) ||
+                (isCompletedChangeRow(newRow) && targetColumn.key !== "적용"))
+            ) {
+              return;
+            }
+
             if (targetColumn.type === "select" && targetColumn.options) {
               if (targetColumn.options.includes(cell)) {
                 newRow[targetColumn.key] = cell;
@@ -551,6 +567,13 @@ const message = messagesByTab[activeTab] ?? "";
 
   const handleSingleCellChange = (rowIndex: number, colKey: string, value: string) => {
     if (isLocked || activeTab === "history" || activeTab === "yearly") return;
+
+    if (activeTab === "change") {
+      const currentRow = rowsByTab.change?.[rowIndex];
+      if (isChangeStatusColumn(colKey) || (currentRow && isCompletedChangeRow(currentRow) && colKey !== "적용")) {
+        return;
+      }
+    }
 
     updateActiveRows((prev) => {
       const next = [...prev];
@@ -661,7 +684,7 @@ const message = messagesByTab[activeTab] ?? "";
       setTabMessage("change", "적용여부가 체크된 수정사항이 없습니다.");
       return;
     }
-const hasUnsavedRows = checkedRows.some((row) => row["저장완료"] !== "저장완료");
+const hasUnsavedRows = checkedRows.some((row) => row["저장여부"] !== "저장완료");
 
 if (hasUnsavedRows) {
   window.alert("저장 후 적용이 가능합니다");
@@ -927,7 +950,7 @@ if (hasMissingRequired) {
       ? {
           ...row,
           적용: "",
-          저장완료: "저장완료",
+          저장여부: "저장완료",
         }
       : row
   );
@@ -1396,6 +1419,10 @@ await fetch("/api/rcm", {
       background: "transparent",
     };
 
+    const isReadOnlyChangeCell =
+      activeTab === "change" &&
+      (isChangeStatusColumn(col.key) || (isCompletedChangeRow(row) && col.key !== "적용"));
+
      if (col.type === "checkbox") {
   return (
     <div
@@ -1411,7 +1438,7 @@ await fetch("/api/rcm", {
       <input
         type="checkbox"
         checked={row[col.key] === "Y"}
-        disabled={isLocked}
+        disabled={isLocked || isReadOnlyChangeCell}
         onChange={(e) => {
           const checked = e.target.checked;
           const nextValue = checked ? "Y" : "";
@@ -1431,7 +1458,7 @@ await fetch("/api/rcm", {
         style={{
           width: "16px",
           height: "16px",
-          cursor: isLocked ? "default" : "pointer",
+          cursor: isLocked || isReadOnlyChangeCell ? "default" : "pointer",
         }}
       />
     </div>
@@ -1455,7 +1482,7 @@ if (activeTab === "history" || activeTab === "yearly") {
       return (
         <select
           value={row[col.key] ?? ""}
-          disabled={isLocked}
+          disabled={isLocked || isReadOnlyChangeCell}
           onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
           onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
           onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
@@ -1475,7 +1502,7 @@ if (activeTab === "history" || activeTab === "yearly") {
   return (
     <select
       value={row[col.key] ?? ""}
-      disabled={isLocked}
+      disabled={isLocked || isReadOnlyChangeCell}
       onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
       onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
       onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
@@ -1496,8 +1523,8 @@ if (activeTab === "history" || activeTab === "yearly") {
   type="text"
   placeholder="YYYY-MM-DD"
   value={row[col.key] ?? ""}
-  disabled={isLocked}
-  readOnly={isLocked}
+  disabled={isLocked || isReadOnlyChangeCell}
+  readOnly={isLocked || isReadOnlyChangeCell}
   onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
   onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
   onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
@@ -1509,7 +1536,7 @@ if (activeTab === "history" || activeTab === "yearly") {
     return (
       <textarea
         value={row[col.key] ?? ""}
-        readOnly={isLocked}
+        readOnly={isLocked || isReadOnlyChangeCell}
         onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
         onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
         onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
