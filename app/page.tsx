@@ -1099,6 +1099,41 @@ export default function RcmPage() {
     }
   };
 
+  const handleSaveHistoryRows = async () => {
+    if (activeTab !== "history") return;
+
+    const normalizedHistoryRows = historyRows.map((row, idx) => ({
+      ...row,
+      checked: row.checked ?? "",
+      no: idx + 1,
+      담당자: row["담당자"] ?? "",
+      수정일: row["수정일"] ?? "",
+      "Mega Process": row["Mega Process"] ?? "",
+      "Control No": row["Control No"] ?? "",
+      "Control Name": row["Control Name"] ?? "",
+      "변경 항목": row["변경 항목"] ?? "",
+      "AS-IS": row["AS-IS"] ?? "",
+      "TO-BE": row["TO-BE"] ?? "",
+      수정사유: row["수정사유"] ?? "",
+    }));
+
+    try {
+      await saveToLocalStorage(
+        rowsByTab,
+        yearValue,
+        lockedTabs,
+        normalizedHistoryRows,
+        completedYearData,
+        [],
+        { historyRows: true }
+      );
+      setHistoryRows(normalizedHistoryRows);
+      setTabMessage("history", "변경이력 탭이 저장되었습니다.");
+    } catch (e: any) {
+      setTabMessage("history", `변경이력 저장 실패: ${e.message}`);
+    }
+  };
+
   const handleDeleteHistoryRows = async () => {
     if (activeTab !== "history") return;
 
@@ -1479,6 +1514,9 @@ export default function RcmPage() {
         )}
         {activeTab === "history" && (
           <>
+            <button onClick={handleSaveHistoryRows} style={{ background: "#334155", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
+              저장
+            </button>
             <button onClick={handleDeleteHistoryRows} style={{ background: "#dc2626", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
               삭제
             </button>
