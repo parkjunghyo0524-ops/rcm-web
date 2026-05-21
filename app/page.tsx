@@ -1524,6 +1524,24 @@ await fetch("/api/rcm", {
     fontWeight: 600,
   });
 
+  const getOriginalRowIndex = (row: RowData, fallbackIndex: number) => {
+    if (activeTab === "history") {
+      const rowNo = Number(row["no"] ?? 0);
+      const foundIndex = historyRows.findIndex((historyRow) => historyRow.no === rowNo);
+      return foundIndex >= 0 ? foundIndex : fallbackIndex;
+    }
+
+    if (activeTab === "yearly") {
+      const sourceRows = completedYearData[selectedYear] ?? [];
+      const foundIndex = sourceRows.findIndex((sourceRow) => sourceRow === row);
+      return foundIndex >= 0 ? foundIndex : fallbackIndex;
+    }
+
+    const sourceRows = rowsByTab[activeTab] ?? [];
+    const foundIndex = sourceRows.findIndex((sourceRow) => sourceRow === row);
+    return foundIndex >= 0 ? foundIndex : fallbackIndex;
+  };
+
   const getChangedTextParts = (oldValue: string, newValue: string) => {
     if (!oldValue || oldValue === newValue) {
       return {
@@ -1932,25 +1950,52 @@ await fetch("/api/rcm", {
             </tr>
           </thead>
           <tbody>
-            {filtered.map((row: RowData, rowIndex: number) => (
-              <tr
-                key={rowIndex}
-                style={{
-                  backgroundColor:
-                    row["신설/삭제"] === "삭제"
-                      ? "#e5e7eb"
-                      : rowIndex % 2 === 0
-                      ? "#ffffff"
-                      : "#f8fbff",
-                }}
-              >
-                {columns.map((col: Column, colIndex: number) => (
-                  <td key={col.key} style={{ border: activeTab !== "history" && activeTab !== "yearly" && activeCell?.row === rowIndex && activeCell?.col === colIndex ? "2px solid #2563eb" : "1px solid #c2cfdf", padding: "0", verticalAlign: "top", width: col.width, minWidth: col.width, maxWidth: col.width, backgroundColor: activeTab !== "history" && activeTab !== "yearly" && activeCell?.row === rowIndex && activeCell?.col === colIndex ? "#eff6ff" : undefined }}>
-                    {renderCellInput(col, row, rowIndex, colIndex)}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {filtered.map((row: RowData, rowIndex: number) => {
+              const originalRowIndex = getOriginalRowIndex(row, rowIndex);
+
+              return (
+                <tr
+                  key={`${activeTab}-${originalRowIndex}-${rowIndex}`}
+                  style={{
+                    backgroundColor:
+                      row["신설/삭제"] === "삭제"
+                        ? "#e5e7eb"
+                        : rowIndex % 2 === 0
+                        ? "#ffffff"
+                        : "#f8fbff",
+                  }}
+                >
+                  {columns.map((col: Column, colIndex: number) => (
+                    <td
+                      key={col.key}
+                      style={{
+                        border:
+                          activeTab !== "history" &&
+                          activeTab !== "yearly" &&
+                          activeCell?.row === originalRowIndex &&
+                          activeCell?.col === colIndex
+                            ? "2px solid #2563eb"
+                            : "1px solid #c2cfdf",
+                        padding: "0",
+                        verticalAlign: "top",
+                        width: col.width,
+                        minWidth: col.width,
+                        maxWidth: col.width,
+                        backgroundColor:
+                          activeTab !== "history" &&
+                          activeTab !== "yearly" &&
+                          activeCell?.row === originalRowIndex &&
+                          activeCell?.col === colIndex
+                            ? "#eff6ff"
+                            : undefined,
+                      }}
+                    >
+                      {renderCellInput(col, row, originalRowIndex, colIndex)}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
