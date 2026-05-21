@@ -181,21 +181,21 @@ export default function RcmPage() {
   const [filters, setFilters] = useState<FilterState>({});
   const [openFilter, setOpenFilter] = useState<string | null>(null);
   const [messagesByTab, setMessagesByTab] = useState<Record<TabKey, string>>({
-  current: "",
-  previous: "",
-  change: "",
-  history: "",
-  yearly: "",
-});
+    current: "",
+    previous: "",
+    change: "",
+    history: "",
+    yearly: "",
+  });
 
-const setTabMessage = (tab: TabKey, msg: string) => {
-  setMessagesByTab((prev) => ({
-    ...prev,
-    [tab]: msg,
-  }));
-};
+  const setTabMessage = (tab: TabKey, msg: string) => {
+    setMessagesByTab((prev) => ({
+      ...prev,
+      [tab]: msg,
+    }));
+  };
 
-const message = messagesByTab[activeTab] ?? "";
+  const message = messagesByTab[activeTab] ?? "";
   const [changeSearch, setChangeSearch] = useState("");
   const [filterPos, setFilterPos] = useState<{ top: number; left: number } | null>(null);
   const [lockedTabs, setLockedTabs] = useState<{ current: boolean; previous: boolean }>({
@@ -411,6 +411,8 @@ const message = messagesByTab[activeTab] ?? "";
 
   const hasFilter = (columnKey: string) => (filters[columnKey] ?? []).length > 0;
 
+  const cleanPastedCell = (value: string) => value.replace(/\r/g, "").replace(/\s+/g, " ").trim();
+
   const parseClipboardHtml = (html: string): string[][] => {
     const doc = new DOMParser().parseFromString(html, "text/html");
     const trs = Array.from(doc.querySelectorAll("tr"));
@@ -418,7 +420,7 @@ const message = messagesByTab[activeTab] ?? "";
 
     return trs.map((tr) => {
       const cells = Array.from(tr.querySelectorAll("td, th"));
-      return cells.map((cell) => (cell.textContent || "").replace(/\r/g, ""));
+      return cells.map((cell) => cleanPastedCell(cell.textContent || ""));
     });
   };
 
@@ -445,7 +447,7 @@ const message = messagesByTab[activeTab] ?? "";
         .replace(/\r/g, "")
         .split("\n")
         .filter((r) => r.length > 0)
-        .map((r) => r.split("\t"));
+        .map((r) => r.split("\t").map((cell) => cleanPastedCell(cell)));
     }
 
     if (pastedRows.length === 0) return;
@@ -470,10 +472,9 @@ const message = messagesByTab[activeTab] ?? "";
                 newRow[targetColumn.key] = cell;
               }
             } else if (targetColumn.type === "checkbox") {
-              newRow[targetColumn.key] =
-                cell === "Y" || cell === "TRUE" || cell === "true" ? "Y" : "";
+              newRow[targetColumn.key] = cell === "Y" || cell === "TRUE" || cell === "true" ? "Y" : "";
             } else {
-              newRow[targetColumn.key] = cell.replace(/\s+/g, " ").trim();
+              newRow[targetColumn.key] = cell;
             }
           }
         });
@@ -484,24 +485,17 @@ const message = messagesByTab[activeTab] ?? "";
       return next;
     });
 
-    setTabMessage(activeTab, `${pastedRows.length}행의 데이터를 셀 기준으로 반영했습니다.`);
+    setTabMessage(activeTab, `${pastedRows.length}행의 데이터를 엑셀 붙여넣기로 반영했습니다.`);
   };
 
   const buildHistoryRowsFromChange = (changeRow: RowData): HistoryRow[] => {
     const controlNo = String(changeRow["Control No."] ?? "").trim();
     if (!controlNo) return [];
 
-    const previousRow =
-      (rowsByTab.previous ?? []).find((row) => isSameApplyTarget(row, changeRow)) ?? null;
+    const previousRow = (rowsByTab.previous ?? []).find((row) => isSameApplyTarget(row, changeRow)) ?? null;
 
-    const megaProcessName = String(
-      changeRow["Mega Process Name"] ?? previousRow?.["Mega Process Name"] ?? ""
-    ).trim();
-
-    const controlName = String(
-      changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? ""
-    ).trim();
-
+    const megaProcessName = String(changeRow["Mega Process Name"] ?? previousRow?.["Mega Process Name"] ?? "").trim();
+    const controlName = String(changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? "").trim();
     const manager = String(changeRow["담당자"] ?? "").trim();
     const reason = String(changeRow["수정사유"] ?? "").trim();
     const modifyDate = String(changeRow["수정일자"] ?? "").trim();
@@ -582,21 +576,21 @@ const message = messagesByTab[activeTab] ?? "";
       const nextYearValue = yearValue;
 
       await saveToLocalStorage(
-  nextRowsByTab,
-  nextYearValue,
-  nextLockedTabs,
-  historyRows,
-  completedYearData,
-  [activeTab as "current" | "previous" | "change"]
-);
+        nextRowsByTab,
+        nextYearValue,
+        nextLockedTabs,
+        historyRows,
+        completedYearData,
+        [activeTab as "current" | "previous" | "change"]
+      );
 
       if (activeTab === "current" || activeTab === "previous") {
         setLockedTabs(nextLockedTabs);
         setTabMessage(activeTab, `${activeTab === "current" ? "당기 RCM" : "전기 RCM"} 탭이 저장되었습니다.`);
       }
     } catch (e: any) {
-  setTabMessage(activeTab, `저장 실패: ${e.message}`);
-}
+      setTabMessage(activeTab, `저장 실패: ${e.message}`);
+    }
   };
 
   const handleSearchCurrentRows = () => {
@@ -612,11 +606,7 @@ const message = messagesByTab[activeTab] ?? "";
     }
 
     const currentRows = rowsByTab.current ?? [];
-
-    const results = currentRows.filter(
-      (row) => String(row["Control No."] ?? "").trim().toLowerCase() === keyword
-    );
-
+    const results = currentRows.filter((row) => String(row["Control No."] ?? "").trim().toLowerCase() === keyword);
     const mappedResults = results.map((row) => ({
       ...buildEmptyRow("change"),
       ...row,
@@ -645,9 +635,7 @@ const message = messagesByTab[activeTab] ?? "";
       return;
     }
 
-    const alreadyApplied = targetRows.some(
-      (row) => row["적용"] === "Y" && row["적용여부"] === "적용완료"
-    );
+    const alreadyApplied = targetRows.some((row) => row["적용"] === "Y" && row["적용여부"] === "적용완료");
 
     if (alreadyApplied) {
       window.alert("이미 적용이 완료된 항목입니다");
@@ -666,12 +654,13 @@ const message = messagesByTab[activeTab] ?? "";
         !String(row["Control No."] ?? "").trim() ||
         !String(row["Major Process Code"] ?? "").trim() ||
         !String(row["Sub Process Code"] ?? "").trim() ||
+        !String(row["담당자"] ?? "").trim() ||
         !String(row["수정일자"] ?? "").trim() ||
         !String(row["수정사유"] ?? "").trim()
     );
 
     if (hasMissingRequired) {
-      window.alert("Control No., Major Process Code, Sub Process Code, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
+      window.alert("Control No., Major Process Code, Sub Process Code, 담당자, 수정일자, 수정사유는 필수값이오니 입력바랍니다.");
       return;
     }
 
@@ -695,9 +684,7 @@ const message = messagesByTab[activeTab] ?? "";
         yearly: [],
       };
 
-      latestHistoryRows = Array.isArray(latestData?.historyRows)
-        ? latestData.historyRows
-        : historyRows;
+      latestHistoryRows = Array.isArray(latestData?.historyRows) ? latestData.historyRows : historyRows;
     } catch (e: any) {
       setTabMessage("change", `최신 데이터 조회 실패: ${e.message}`);
       return;
@@ -711,17 +698,10 @@ const message = messagesByTab[activeTab] ?? "";
       const controlNo = String(changeRow["Control No."] ?? "").trim();
       if (!controlNo) return [];
 
-      const previousRow =
-        latestPreviousRows.find((row) => isSameApplyTarget(row, changeRow)) ?? null;
+      const previousRow = latestPreviousRows.find((row) => isSameApplyTarget(row, changeRow)) ?? null;
 
-      const megaProcessName = String(
-        changeRow["Mega Process Name"] ?? previousRow?.["Mega Process Name"] ?? ""
-      ).trim();
-
-      const controlName = String(
-        changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? ""
-      ).trim();
-
+      const megaProcessName = String(changeRow["Mega Process Name"] ?? previousRow?.["Mega Process Name"] ?? "").trim();
+      const controlName = String(changeRow["Control Name"] ?? previousRow?.["Control Name"] ?? "").trim();
       const manager = String(changeRow["담당자"] ?? "").trim();
       const reason = String(changeRow["수정사유"] ?? "").trim();
       const modifyDate = String(changeRow["수정일자"] ?? "").trim();
@@ -794,9 +774,7 @@ const message = messagesByTab[activeTab] ?? "";
       }
 
       nextCurrent = nextCurrent.map((currentRow) => {
-        if (!isSameApplyTarget(currentRow, row)) {
-          return currentRow;
-        }
+        if (!isSameApplyTarget(currentRow, row)) return currentRow;
 
         const updatedRow = { ...currentRow };
         commonColumns.forEach((col) => {
@@ -828,17 +806,6 @@ const message = messagesByTab[activeTab] ?? "";
         no: idx + 1,
       }));
 
-    const isAppliedTarget = (candidate: RowData) =>
-      checkedRows.some(
-        (checkedRow) =>
-          isSameApplyTarget(candidate, checkedRow) &&
-          String(candidate["수정일자"] ?? "").trim() === String(checkedRow["수정일자"] ?? "").trim() &&
-          String(candidate["수정사유"] ?? "").trim() === String(checkedRow["수정사유"] ?? "").trim()
-      );
-
-    const nextChangeBase = latestRowsByTab.change ?? rowsByTab.change ?? [];
-    const reflectedKeys = new Set<string>();
-
     const makeChangeKey = (row: RowData) =>
       [
         String(row["Control No."] ?? "").trim(),
@@ -847,6 +814,9 @@ const message = messagesByTab[activeTab] ?? "";
         String(row["수정일자"] ?? "").trim(),
         String(row["수정사유"] ?? "").trim(),
       ].join("||");
+
+    const nextChangeBase = latestRowsByTab.change ?? rowsByTab.change ?? [];
+    const reflectedKeys = new Set<string>();
 
     const nextChange = nextChangeBase.map((row) => {
       const matchedCheckedRow = checkedRows.find(
@@ -902,8 +872,8 @@ const message = messagesByTab[activeTab] ?? "";
       setHistoryRows(normalizedHistoryRows);
       setTabMessage("change", `${checkedRows.length}건의 수정사항이 적용되었고, 변경이력이 누적되었습니다.`);
     } catch (e: any) {
-  setTabMessage("change", `적용사항 저장 실패: ${e.message}`);
-}
+      setTabMessage("change", `적용사항 저장 실패: ${e.message}`);
+    }
   };
 
   const handleFinalizeCurrentYear = async () => {
@@ -934,26 +904,19 @@ const message = messagesByTab[activeTab] ?? "";
     };
 
     try {
-      await saveToLocalStorage(
-  rowsByTab,
-  yearValue,
-  nextLockedTabs,
-  historyRows,
-  {},
-  ["current"]
-);
+      await saveToLocalStorage(rowsByTab, yearValue, nextLockedTabs, historyRows, {}, ["current"]);
 
-await fetch("/api/rcm", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify({
-    mode: "yearly",
-    year,
-    rows: finalizedRows,
-  }),
-});
+      await fetch("/api/rcm", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          mode: "yearly",
+          year,
+          rows: finalizedRows,
+        }),
+      });
       setCompletedYearData(nextCompletedYearData);
       setSelectedYear(year);
       setLockedTabs(nextLockedTabs);
@@ -1017,14 +980,7 @@ await fetch("/api/rcm", {
         current: false,
       };
       try {
-        await saveToLocalStorage(
-  nextRowsByTab,
-  yearValue,
-  nextLockedTabs,
-  historyRows,
-  completedYearData,
-  ["current"]
-);
+        await saveToLocalStorage(nextRowsByTab, yearValue, nextLockedTabs, historyRows, completedYearData, ["current"]);
         setRowsByTab(nextRowsByTab);
         setLockedTabs(nextLockedTabs);
         setTabMessage("current", "당기 RCM 탭을 초기화했습니다.");
@@ -1046,14 +1002,7 @@ await fetch("/api/rcm", {
         previous: false,
       };
       try {
-        await saveToLocalStorage(
-  nextRowsByTab,
-  yearValue,
-  nextLockedTabs,
-  historyRows,
-  completedYearData,
-  ["previous"]
-);
+        await saveToLocalStorage(nextRowsByTab, yearValue, nextLockedTabs, historyRows, completedYearData, ["previous"]);
         setRowsByTab(nextRowsByTab);
         setLockedTabs(nextLockedTabs);
         setTabMessage("previous", "전기 RCM 탭을 초기화했습니다.");
@@ -1071,14 +1020,7 @@ await fetch("/api/rcm", {
         yearly: [],
       };
       try {
-        await saveToLocalStorage(
-  nextRowsByTab,
-  yearValue,
-  lockedTabs,
-  historyRows,
-  completedYearData,
-  ["change"]
-);
+        await saveToLocalStorage(nextRowsByTab, yearValue, lockedTabs, historyRows, completedYearData, ["change"]);
         setRowsByTab(nextRowsByTab);
         setChangeSearch("");
         setTabMessage("change", "수정사항 탭을 초기화했습니다.");
@@ -1090,15 +1032,7 @@ await fetch("/api/rcm", {
 
     if (activeTab === "history") {
       try {
-        await saveToLocalStorage(
-          rowsByTab,
-          yearValue,
-          lockedTabs,
-          [],
-          completedYearData,
-          [],
-          { historyRows: true }
-        );
+        await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, [], completedYearData, [], { historyRows: true });
         setHistoryRows([]);
         setTabMessage("history", "변경이력 탭을 초기화했습니다.");
       } catch {
@@ -1106,6 +1040,7 @@ await fetch("/api/rcm", {
       }
     }
   };
+
   const handleDeleteHistoryRows = async () => {
     if (activeTab !== "history") return;
 
@@ -1129,21 +1064,14 @@ await fetch("/api/rcm", {
       }));
 
     try {
-      await saveToLocalStorage(
-        rowsByTab,
-        yearValue,
-        lockedTabs,
-        nextHistoryRows,
-        completedYearData,
-        [],
-        { historyRows: true }
-      );
+      await saveToLocalStorage(rowsByTab, yearValue, lockedTabs, nextHistoryRows, completedYearData, [], { historyRows: true });
       setHistoryRows(nextHistoryRows);
       setTabMessage("history", `${checkedRows.length}건의 변경이력을 삭제했습니다.`);
     } catch {
       setTabMessage("history", "변경이력 삭제 저장에 실패했습니다.");
     }
   };
+
   const handleClearHistoryChecks = () => {
     if (activeTab !== "history") return;
 
@@ -1162,6 +1090,7 @@ await fetch("/api/rcm", {
     );
     setTabMessage("history", "변경이력 삭제 체크박스를 전체 해제했습니다.");
   };
+
   const handleAddChangeRow = () => {
     setRowsByTab((prev) => ({
       ...prev,
@@ -1211,15 +1140,13 @@ await fetch("/api/rcm", {
       .map((g) => `<th colspan="${g.span}">${g.group}</th>`)
       .join("");
 
-    const columnHeaderHtml = downloadColumns
-      .map((col) => `<th>${col.label.replace(/\n/g, " ")}</th>`)
-      .join("");
+    const columnHeaderHtml = downloadColumns.map((col) => `<th>${col.label.replace(/\n/g, " ")}</th>`).join("");
 
     const bodyHtml = downloadRows
       .map((row) => {
         const cells = downloadColumns
-  .map((col: Column) => {
-    const value = String((row as RowData)[col.key] ?? "")
+          .map((col: Column) => {
+            const value = String((row as RowData)[col.key] ?? "")
               .replace(/&/g, "&amp;")
               .replace(/</g, "&lt;")
               .replace(/>/g, "&gt;")
@@ -1254,15 +1181,15 @@ await fetch("/api/rcm", {
           </style>
         </head>
         <body>
-<div style="padding: 0 30px;">
-  <table>
-    <thead>
-      <tr>${groupHeaderHtml}</tr>
-      <tr>${columnHeaderHtml}</tr>
-    </thead>
-    <tbody>${bodyHtml}</tbody>
-  </table>
-</div>
+          <div style="padding: 0 30px;">
+            <table>
+              <thead>
+                <tr>${groupHeaderHtml}</tr>
+                <tr>${columnHeaderHtml}</tr>
+              </thead>
+              <tbody>${bodyHtml}</tbody>
+            </table>
+          </div>
         </body>
       </html>
     `;
@@ -1284,7 +1211,6 @@ await fetch("/api/rcm", {
 
     setTabMessage(activeTab, `${tabNameMap[activeTab]} 탭을 엑셀로 다운로드했습니다.`);
   };
-
 
   const tabButtonStyle = (tab: TabKey): React.CSSProperties => ({
     background: activeTab === tab ? "#334155" : "#e2e8f0",
@@ -1310,48 +1236,45 @@ await fetch("/api/rcm", {
       background: "transparent",
     };
 
-     if (col.type === "checkbox") {
-  return (
-    <div
-      style={{
-        width: "100%",
-        minHeight: "42px",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        background: "transparent",
-      }}
-    >
-      <input
-        type="checkbox"
-        checked={row[col.key] === "Y"}
-        disabled={isLocked}
-        onChange={(e) => {
-          const checked = e.target.checked;
-          const nextValue = checked ? "Y" : "";
+    if (col.type === "checkbox") {
+      return (
+        <div
+          style={{
+            width: "100%",
+            minHeight: "42px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "transparent",
+          }}
+        >
+          <input
+            type="checkbox"
+            checked={row[col.key] === "Y"}
+            disabled={isLocked}
+            onChange={(e) => {
+              const checked = e.target.checked;
+              const nextValue = checked ? "Y" : "";
 
-          if ((activeTab as TabKey) === "history") {
-            setHistoryRows((prev) =>
-              prev.map((r, idx) =>
-                idx === rowIndex ? { ...r, checked: nextValue } : r
-              )
-            );
-            return;
-          }
+              if ((activeTab as TabKey) === "history") {
+                setHistoryRows((prev) => prev.map((r, idx) => (idx === rowIndex ? { ...r, checked: nextValue } : r)));
+                return;
+              }
 
-          handleSingleCellChange(rowIndex, col.key, nextValue);
-        }}
-        onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-        style={{
-          width: "16px",
-          height: "16px",
-          cursor: isLocked ? "default" : "pointer",
-        }}
-      />
-    </div>
-  );
-}
-if (activeTab === "history" || activeTab === "yearly") {
+              handleSingleCellChange(rowIndex, col.key, nextValue);
+            }}
+            onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+            style={{
+              width: "16px",
+              height: "16px",
+              cursor: isLocked ? "default" : "pointer",
+            }}
+          />
+        </div>
+      );
+    }
+
+    if (activeTab === "history" || activeTab === "yearly") {
       return (
         <div
           style={{
@@ -1384,39 +1307,19 @@ if (activeTab === "history" || activeTab === "yearly") {
       );
     }
 
-
-    if ((col.type as Column["type"]) === "select") {
-  return (
-    <select
-      value={row[col.key] ?? ""}
-      disabled={isLocked}
-      onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
-      onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-      onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
-      style={{ ...commonStyle, minHeight: "42px" }}
-    >
-      {(col.options ?? [""]).map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  );
-}
-
     if (col.type === "date") {
       return (
         <input
-  type="text"
-  placeholder="YYYY-MM-DD"
-  value={row[col.key] ?? ""}
-  disabled={isLocked}
-  readOnly={isLocked}
-  onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
-  onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
-  onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
-  style={{ ...commonStyle, minHeight: "42px" }}
-/>
+          type="text"
+          placeholder="YYYY-MM-DD"
+          value={row[col.key] ?? ""}
+          disabled={isLocked}
+          readOnly={isLocked}
+          onChange={(e) => handleSingleCellChange(rowIndex, col.key, e.target.value)}
+          onFocus={() => setActiveCell({ row: rowIndex, col: colIndex })}
+          onPaste={(e) => handleCellPaste(e, rowIndex, colIndex)}
+          style={{ ...commonStyle, minHeight: "42px" }}
+        />
       );
     }
 
@@ -1432,7 +1335,8 @@ if (activeTab === "history" || activeTab === "yearly") {
     );
   };
 
-  return ( <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
+  return (
+    <div style={{ padding: "18px", fontFamily: "Arial, sans-serif", backgroundColor: "white", height: "100vh", overflow: "hidden", display: "flex", flexDirection: "column" }}>
       <div style={{ display: "flex", alignItems: "center", gap: "14px", marginBottom: "14px" }}>
         <img src="/logo.png" alt="logo" style={{ height: "48px", background: "white" }} />
         <h1 style={{ fontSize: "28px", fontWeight: "bold", margin: 0 }}>RCM</h1>
@@ -1472,6 +1376,9 @@ if (activeTab === "history" || activeTab === "yearly") {
             <button onClick={handleSearchCurrentRows} style={{ background: "#334155", color: "white", border: "none", borderRadius: "6px", padding: "10px 14px", cursor: "pointer" }}>
               조회
             </button>
+          </div>
+          <div style={{ fontSize: "12px", color: "#64748b" }}>
+            엑셀에서 복사한 뒤 수정사항 표의 시작 셀을 클릭하고 Ctrl+V로 붙여넣을 수 있습니다. 표가 비어 있으면 + 버튼으로 빈 행을 먼저 추가하세요.
           </div>
         </div>
       )}
@@ -1558,54 +1465,63 @@ if (activeTab === "history" || activeTab === "yearly") {
         )}
       </div>
 
-<div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflow: "auto", flex: 1, backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 1px" }}>
-  <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
-    <thead>
-      <tr>
-        {groupHeaders.map((g) => (
-          <th key={g.group} colSpan={g.span} style={{ border: "1px solid #8a98ac", padding: "6px 8px", color: "white", backgroundColor: "#4e5b6b", textAlign: "center", fontWeight: "bold", position: "sticky", top: 0, zIndex: 3, whiteSpace: "nowrap" }}>
-            {g.group}
-          </th>
-        ))}
-      </tr>
-      <tr>
-        {columns.map((col) => (
-          <th key={col.key} style={{ border: "1px solid #8fa1b7", padding: "0", backgroundColor: hasFilter(col.key) ? "#8ea4c5" : "#a9b7ca", color: "white", position: "sticky", top: 33, zIndex: 2, width: col.width, minWidth: col.width, maxWidth: col.width, verticalAlign: "top" }}>
-            <div style={{ padding: "8px 8px 4px 8px", whiteSpace: "pre-line", textAlign: "center", minHeight: "54px", fontWeight: "bold", lineHeight: 1.2 }}>
-              {col.label}
-            </div>
-
-{!(activeTab === "history" && col.key === "checked") && (
-            <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
-              <button onClick={(e) => {const rect = e.currentTarget.getBoundingClientRect();const popupWidth = 110;setFilterPos({top: rect.bottom + 4,left: rect.right - popupWidth});setOpenFilter((prev) => (prev === col.key ? null : col.key));}} style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}><span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span></button>
-      
-
-              {openFilter === col.key && (
-                <div style={{position: "fixed",top: filterPos?.top ?? 0,left: filterPos?.left ?? 0,width: "150px",maxHeight: "260px",overflowY: "auto",background: "white",border: "1px solid #94a3b8",boxShadow: "0 8px 24px rgba(0,0,0,0.18)",zIndex: 99999,color: "#111827",borderRadius: "6px",textAlign: "left",}}>
-                  <div style={{ padding: "8px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <span style={{ fontWeight: "bold", fontSize: "12px" }}>{col.label.split("\n")[0]}</span>
-                    <button onClick={() => clearColumnFilter(col.key)} style={{ border: "none", background: "transparent", color: "#2563eb", cursor: "pointer", fontSize: "12px" }}>
-                      초기화
-                    </button>
+      <div style={{ border: "1px solid #8fa1b7", borderRadius: "8px", overflow: "auto", flex: 1, backgroundColor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.06)", margin: "0 1px" }}>
+        <table style={{ borderCollapse: "collapse", width: "max-content", minWidth: activeTab === "history" ? "1640px" : "7600px", fontSize: "12px" }}>
+          <thead>
+            <tr>
+              {groupHeaders.map((g) => (
+                <th key={g.group} colSpan={g.span} style={{ border: "1px solid #8a98ac", padding: "6px 8px", color: "white", backgroundColor: "#4e5b6b", textAlign: "center", fontWeight: "bold", position: "sticky", top: 0, zIndex: 3, whiteSpace: "nowrap" }}>
+                  {g.group}
+                </th>
+              ))}
+            </tr>
+            <tr>
+              {columns.map((col) => (
+                <th key={col.key} style={{ border: "1px solid #8fa1b7", padding: "0", backgroundColor: hasFilter(col.key) ? "#8ea4c5" : "#a9b7ca", color: "white", position: "sticky", top: 33, zIndex: 2, width: col.width, minWidth: col.width, maxWidth: col.width, verticalAlign: "top" }}>
+                  <div style={{ padding: "8px 8px 4px 8px", whiteSpace: "pre-line", textAlign: "center", minHeight: "54px", fontWeight: "bold", lineHeight: 1.2 }}>
+                    {col.label}
                   </div>
-                  <div style={{ padding: "8px" }}>
-                    {optionsByColumn[col.key].length === 0 ? (
-                      <div style={{ fontSize: "12px", color: "#6b7280" }}>값 없음</div>
-                    ) : (
-                      optionsByColumn[col.key].map((option) => (
-                        <label key={option} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", padding: "4px 0", cursor: "pointer" }}>
-                          <input type="checkbox" checked={(filters[col.key] ?? []).includes(option)} onChange={() => toggleFilterValue(col.key, option)} />
-                          <span style={{ wordBreak: "break-word", lineHeight: 1.3 }}>{option}</span>
-                        </label>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-            )}
-          </th>
-        ))}
+
+                  {!(activeTab === "history" && col.key === "checked") && (
+                    <div style={{ display: "flex", justifyContent: "flex-end", padding: "0 6px 6px 6px", position: "relative" }} ref={openFilter === col.key ? filterRef : null}>
+                      <button
+                        onClick={(e) => {
+                          const rect = e.currentTarget.getBoundingClientRect();
+                          const popupWidth = 110;
+                          setFilterPos({ top: rect.bottom + 4, left: rect.right - popupWidth });
+                          setOpenFilter((prev) => (prev === col.key ? null : col.key));
+                        }}
+                        style={{ width: "18px", height: "18px", background: hasFilter(col.key) ? "#dbeafe" : "#edf2f7", border: "1px solid #95a3b8", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" }}
+                      >
+                        <span style={{ fontSize: "10px", color: hasFilter(col.key) ? "#1d4ed8" : "#4b5563" }}>▼</span>
+                      </button>
+
+                      {openFilter === col.key && (
+                        <div style={{ position: "fixed", top: filterPos?.top ?? 0, left: filterPos?.left ?? 0, width: "150px", maxHeight: "260px", overflowY: "auto", background: "white", border: "1px solid #94a3b8", boxShadow: "0 8px 24px rgba(0,0,0,0.18)", zIndex: 99999, color: "#111827", borderRadius: "6px", textAlign: "left" }}>
+                          <div style={{ padding: "8px", borderBottom: "1px solid #e5e7eb", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                            <span style={{ fontWeight: "bold", fontSize: "12px" }}>{col.label.split("\n")[0]}</span>
+                            <button onClick={() => clearColumnFilter(col.key)} style={{ border: "none", background: "transparent", color: "#2563eb", cursor: "pointer", fontSize: "12px" }}>
+                              초기화
+                            </button>
+                          </div>
+                          <div style={{ padding: "8px" }}>
+                            {optionsByColumn[col.key].length === 0 ? (
+                              <div style={{ fontSize: "12px", color: "#6b7280" }}>값 없음</div>
+                            ) : (
+                              optionsByColumn[col.key].map((option) => (
+                                <label key={option} style={{ display: "flex", alignItems: "flex-start", gap: "8px", fontSize: "12px", padding: "4px 0", cursor: "pointer" }}>
+                                  <input type="checkbox" checked={(filters[col.key] ?? []).includes(option)} onChange={() => toggleFilterValue(col.key, option)} />
+                                  <span style={{ wordBreak: "break-word", lineHeight: 1.3 }}>{option}</span>
+                                </label>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </th>
+              ))}
             </tr>
           </thead>
           <tbody>
